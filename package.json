@@ -1,16 +1,15 @@
 {
-	"name": "obsidian-sample-plugin",
+	"name": "obsidian-llm-docs",
 	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"description": "Chat with LLM (ChatGPT) inside Obsidian files",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"version": "node version-bump.mjs && git add manifest.json versions.json"
 	},
-	"keywords": [],
-	"author": "",
-	"license": "MIT",
+	"keywords": ["Obsidian", "LLM", "ChatGPT"],
+	"author": "Shane Lamb",
 	"devDependencies": {
 		"@types/node": "^16.11.6",
 		"@typescript-eslint/eslint-plugin": "5.29.0",
