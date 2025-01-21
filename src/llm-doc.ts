@@ -41,11 +41,14 @@ export class LlmDoc {
 	}
 
 	async write() {
-		const text = messagesToText(this.messages)
-		await this.app.vault.modify(this.file, text)
 		await this.app.fileManager.processFrontMatter(this.file, (frontmatter) => {
 			frontmatter.model = this.properties.model
 		})
+		const newMessagesText = messagesToText(this.messages)
+		const existingText = await this.app.vault.read(this.file)
+		const {contentStart} = getFrontMatterInfo(existingText)
+		const newText = existingText.slice(0, contentStart) + newMessagesText
+		await this.app.vault.modify(this.file, newText)
 	}
 
 	async complete(openai: OpenaiSettings) {
