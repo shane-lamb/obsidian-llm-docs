@@ -83,25 +83,14 @@ export default class LlmDocsPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings()
 
+		this.addRibbonIcon('bot', 'Create new LLM doc', () => {
+			this.createNewDoc()
+		})
+
 		this.addCommand({
 			id: 'create',
 			name: 'Create new LLM document',
-			callback: async () => {
-				// todo: handle directory not existing (not yet created)
-				// todo: handle directory being empty
-				const dir = normalizePath(this.settings.docsDir)
-				const doc = await LlmDoc.create(
-					this.app,
-					`${dir}/new.md`,
-					{model: OpenaiDefaultModel},
-					[
-						{role: 'system', content: 'system prompt here'},
-						{role: 'user', content: ''}
-					]
-				)
-				const leaf = this.app.workspace.getLeaf(false) // false = open in the current tab
-				await leaf.openFile(doc.file)
-			}
+			callback: () => this.createNewDoc()
 		})
 
 		this.addCommand({
@@ -118,6 +107,21 @@ export default class LlmDocsPlugin extends Plugin {
 		this.addSettingTab(new SettingsTab(this.app, this))
 
 		this.registerEditorExtension(emojiListPlugin)
+	}
+
+	async createNewDoc() {
+		const dir = normalizePath(this.settings.docsDir)
+		const doc = await LlmDoc.create(
+			this.app,
+			`${dir}/test.md`,
+			{model: OpenaiDefaultModel},
+			[
+				{role: 'system', content: 'system prompt here'},
+				{role: 'user', content: ''}
+			]
+		)
+		const leaf = this.app.workspace.getLeaf(false) // false = open in the current tab
+		await leaf.openFile(doc.file)
 	}
 
 	onunload() {
