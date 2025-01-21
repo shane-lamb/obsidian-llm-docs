@@ -110,10 +110,14 @@ export default class LlmDocsPlugin extends Plugin {
 	}
 
 	async createNewDoc() {
+		// create directory if it doesn't exist
 		const dir = normalizePath(this.settings.docsDir)
-		const dateString = new Date().toISOString().split('T')[0]
+		if (!this.app.vault.getAbstractFileByPath(dir)) {
+			await this.app.vault.createFolder(dir)
+		}
 
 		// find the next free path
+		const dateString = new Date().toISOString().split('T')[0]
 		let freePath: string | null = null
 		for (let i = 1; i < 100; i++) {
 			const formattedNumber = i.toString().padStart(2, '0')
@@ -123,12 +127,12 @@ export default class LlmDocsPlugin extends Plugin {
 				break
 			}
 		}
-
 		if (!freePath) {
 			new Notice("You're on fire!")
 			return
 		}
 
+		// create the doc
 		const doc = await LlmDoc.create(
 			this.app,
 			freePath,
@@ -139,6 +143,7 @@ export default class LlmDocsPlugin extends Plugin {
 			]
 		)
 
+		// navigate to the doc
 		const leaf = this.app.workspace.getLeaf(false) // false = open in the current tab
 		await leaf.openFile(doc.file)
 	}
