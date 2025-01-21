@@ -6,3 +6,14 @@ available in the app when your plugin is enabled.
 If your plugin does not need CSS, delete this file.
 
 */
+.llmdocs-heading-system {
+	color: cadetblue;
+}
+
+.llmdocs-heading-user {
+	color: green;
+}
+
+.llmdocs-heading-assistant {
+	color: darkorange;
+}
