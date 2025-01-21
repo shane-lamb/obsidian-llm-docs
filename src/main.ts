@@ -111,15 +111,34 @@ export default class LlmDocsPlugin extends Plugin {
 
 	async createNewDoc() {
 		const dir = normalizePath(this.settings.docsDir)
+		const dateString = new Date().toISOString().split('T')[0]
+
+		// find the next free path
+		let freePath: string | null = null
+		for (let i = 1; i < 100; i++) {
+			const formattedNumber = i.toString().padStart(2, '0')
+			const checkPath = `${dir}/${dateString}_${formattedNumber}_LLM.md`
+			if (!this.app.vault.getAbstractFileByPath(checkPath)) {
+				freePath = checkPath
+				break
+			}
+		}
+
+		if (!freePath) {
+			new Notice("You're on fire!")
+			return
+		}
+
 		const doc = await LlmDoc.create(
 			this.app,
-			`${dir}/test.md`,
+			freePath,
 			{model: OpenaiDefaultModel},
 			[
 				{role: 'system', content: 'system prompt here'},
 				{role: 'user', content: ''}
 			]
 		)
+
 		const leaf = this.app.workspace.getLeaf(false) // false = open in the current tab
 		await leaf.openFile(doc.file)
 	}
