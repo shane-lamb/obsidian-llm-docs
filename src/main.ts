@@ -1,81 +1,9 @@
 import { App, Editor, MarkdownView, Plugin, PluginSettingTab, Setting, Notice, normalizePath } from 'obsidian'
+
 import { OpenaiDefaultModel } from './open-ai'
 import { LlmDoc } from './llm-doc'
-
-import {
-	ViewUpdate,
-	PluginValue,
-	EditorView,
-	ViewPlugin,
-	DecorationSet, Decoration, PluginSpec,
-} from '@codemirror/view'
-import { RangeSetBuilder } from '@codemirror/state'
 import { defaultPluginSettings, PluginSettings } from './settings'
-
-class EmojiListPlugin implements PluginValue {
-	decorations: DecorationSet
-
-	constructor(view: EditorView) {
-		this.decorations = this.buildDecorations(view)
-		console.log('constructed')
-	}
-
-	update(update: ViewUpdate) {
-		if (update.docChanged || update.viewportChanged) {
-			this.decorations = this.buildDecorations(update.view)
-		}
-	}
-
-	buildDecorations(view: EditorView): DecorationSet {
-		const builder = new RangeSetBuilder<Decoration>()
-
-		let offset = 0
-		for (const text of view.state.doc.text) {
-			if (text.startsWith('# ')) {
-				if (text === '# system') {
-					builder.add(
-						offset,
-						offset + text.length,
-						Decoration.mark({
-							class: 'llmdocs-heading-system'
-						})
-					)
-				} else if (text === '# user') {
-					builder.add(
-						offset,
-						offset + text.length,
-						Decoration.mark({
-							class: 'llmdocs-heading-user'
-						})
-					)
-				} else if (text === '# assistant') {
-					builder.add(
-						offset,
-						offset + text.length,
-						Decoration.mark({
-							class: 'llmdocs-heading-assistant'
-						})
-					)
-				}
-			}
-			offset += text.length + 1
-		}
-
-		return builder.finish()
-	}
-
-	destroy() {
-	}
-}
-
-const pluginSpec: PluginSpec<EmojiListPlugin> = {
-	decorations: (value: EmojiListPlugin) => value.decorations,
-}
-
-export const emojiListPlugin = ViewPlugin.fromClass(
-	EmojiListPlugin,
-	pluginSpec
-)
+import { llmDocsCodemirrorPlugin } from './editor-extension'
 
 export default class LlmDocsPlugin extends Plugin {
 	settings: PluginSettings
@@ -106,7 +34,7 @@ export default class LlmDocsPlugin extends Plugin {
 
 		this.addSettingTab(new SettingsTab(this.app, this))
 
-		this.registerEditorExtension(emojiListPlugin)
+		this.registerEditorExtension(llmDocsCodemirrorPlugin)
 	}
 
 	async createNewDoc() {

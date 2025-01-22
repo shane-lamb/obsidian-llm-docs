@@ -64,6 +64,7 @@ export class OpenaiChatCompletionStream extends EventEmitter {
 										this.emit('data', content)
 									}
 								} catch (error) {
+									// todo: clean this up
 									console.log(jsonData)
 								}
 							}
