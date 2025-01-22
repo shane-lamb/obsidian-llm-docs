@@ -1,4 +1,13 @@
-import { App, Editor, MarkdownView, Plugin, PluginSettingTab, Setting, Notice, normalizePath } from 'obsidian'
+import {
+	App,
+	Editor,
+	MarkdownView,
+	Plugin,
+	PluginSettingTab,
+	Setting,
+	Notice,
+	normalizePath,
+} from 'obsidian'
 
 import { OpenaiDefaultModel } from './open-ai'
 import { LlmDoc } from './llm-doc'
@@ -7,6 +16,7 @@ import { llmDocsCodemirrorPlugin } from './editor-extension'
 
 export default class LlmDocsPlugin extends Plugin {
 	settings: PluginSettings
+	onkeydownListeners: ((evt: KeyboardEvent) => void)[] = []
 
 	async onload() {
 		await this.loadSettings()
@@ -26,9 +36,22 @@ export default class LlmDocsPlugin extends Plugin {
 			name: 'Complete LLM document',
 			editorCallback: async (editor: Editor, view: MarkdownView) => {
 				const doc = await LlmDoc.fromFile(this.app, view.file!)
+
+				const onkeydown = (evt: KeyboardEvent)=> {
+					if (evt.key === 'Escape') {
+						doc.stop()
+						new Notice('Cancelling...')
+					}
+				}
+				this.onkeydownListeners.push(onkeydown)
+				document.addEventListener('keydown', onkeydown)
+
 				// todo handle situation where openai key empty or not valid
 				await doc.complete(this.settings.openai)
 				editor.setCursor({line: editor.lastLine(), ch: 0})
+
+				document.removeEventListener('keydown', onkeydown)
+				this.onkeydownListeners.remove(onkeydown)
 			}
 		})
 
@@ -56,7 +79,7 @@ export default class LlmDocsPlugin extends Plugin {
 			}
 		}
 		if (!freePath) {
-			new Notice("You're on fire!")
+			new Notice('You\'re on fire!')
 			return
 		}
 
@@ -77,7 +100,9 @@ export default class LlmDocsPlugin extends Plugin {
 	}
 
 	onunload() {
-
+		for (const listener of this.onkeydownListeners) {
+			document.removeEventListener('keydown', listener)
+		}
 	}
 
 	async loadSettings() {

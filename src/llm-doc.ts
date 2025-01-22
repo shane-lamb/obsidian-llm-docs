@@ -1,5 +1,5 @@
 import { App, getFrontMatterInfo, TFile } from 'obsidian'
-import { OpenaiChatCompletionStream, OpenaiDefaultModel, OpenaiMessage } from './open-ai'
+import { FakeChatCompletionStream, OpenaiChatCompletionStream, OpenaiDefaultModel, OpenaiMessage } from './open-ai'
 import { messagesToText, textToMessages } from './llm-doc-util'
 import { OpenaiSettings } from './settings'
 
@@ -7,7 +7,12 @@ export interface LlmDocProperties {
 	model: string
 }
 
+type CompletionStream = OpenaiChatCompletionStream
+const completionStream = OpenaiChatCompletionStream
+
 export class LlmDoc {
+	private currentStream: CompletionStream | null = null
+
 	private constructor(
 		private app: App,
 		public file: TFile,
@@ -51,6 +56,10 @@ export class LlmDoc {
 		await this.app.vault.modify(this.file, newText)
 	}
 
+	async stop() {
+		this.currentStream?.stop()
+	}
+
 	async complete(openai: OpenaiSettings) {
 		if (this.messages.length === 0) {
 			return // todo
@@ -64,10 +73,12 @@ export class LlmDoc {
 
 		await this.write()
 
-		const stream = new OpenaiChatCompletionStream({
+		const stream = new completionStream({
 			apiKey: openai.apiKey,
 			messages: this.messages,
 		})
+
+		this.currentStream = stream
 
 		await new Promise<void>((resolve, reject) => {
 			const onData = (data: string) => {

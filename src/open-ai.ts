@@ -59,13 +59,12 @@ export class OpenaiChatCompletionStream extends EventEmitter {
 									const parsed = JSON.parse(jsonData)
 									const content = parsed.choices[0]?.delta?.content
 									if (content) {
-										console.log(content)
 										this.entireContent += content
 										this.emit('data', content)
 									}
 								} catch (error) {
 									// todo: clean this up
-									console.log(jsonData)
+									console.log({error, jsonData, line})
 								}
 							}
 						}
@@ -96,6 +95,41 @@ export class OpenaiChatCompletionStream extends EventEmitter {
 		if (this.currentRequest && !this.stopped) {
 			this.stopped = true
 			this.currentRequest.destroy()
+			this.emit('end')
 		}
+	}
+}
+
+export class FakeChatCompletionStream extends EventEmitter {
+	entireContent = ''
+
+	private stopped = false
+
+	constructor(settings: { apiKey: string, messages: OpenaiMessage[], model?: string }) {
+		super()
+	}
+
+	start() {
+		const repeatingOutput = 'testing '
+
+		const interval = setInterval(() => {
+			if (this.stopped) {
+				clearInterval(interval)
+				this.emit('end')
+				return
+			}
+
+			this.entireContent += repeatingOutput
+			this.emit('data', repeatingOutput)
+		}, 100)
+
+		setTimeout(() => {
+			this.stop()
+			this.emit('end')
+		}, 5000)
+	}
+
+	stop() {
+		this.stopped = true
 	}
 }
