@@ -1,10 +1,10 @@
 import { App, getFrontMatterInfo, TFile } from 'obsidian'
-import { FakeChatCompletionStream, OpenaiChatCompletionStream, OpenaiDefaultModel, OpenaiMessage } from './open-ai'
+import { FakeChatCompletionStream, OpenaiChatCompletionStream, OpenaiMessage } from './open-ai'
 import { messagesToText, textToMessages } from './llm-doc-util'
-import { OpenaiSettings } from './settings'
+import { DefaultsSettings, OpenaiModel, OpenaiSettings } from './settings'
 
 export interface LlmDocProperties {
-	model: string
+	model: OpenaiModel
 }
 
 type CompletionStream = OpenaiChatCompletionStream
@@ -21,13 +21,13 @@ export class LlmDoc {
 	) {
 	}
 
-	static async fromFile(app: App, file: TFile): Promise<LlmDoc> {
+	static async fromFile(app: App, file: TFile, defaults: DefaultsSettings): Promise<LlmDoc> {
 		let properties = {} as LlmDocProperties
 		await app.fileManager.processFrontMatter(file, (frontmatter) => {
-			const defaults: LlmDocProperties = {
-				model: OpenaiDefaultModel,
+			properties = {
+				model: defaults.model,
+				...frontmatter
 			}
-			properties = { ...defaults, ...frontmatter }
 		})
 		const text = await app.vault.read(file)
 		const {contentStart} = getFrontMatterInfo(text)
@@ -73,10 +73,7 @@ export class LlmDoc {
 
 		await this.write()
 
-		const stream = new completionStream({
-			apiKey: openai.apiKey,
-			messages: this.messages,
-		})
+		const stream = new completionStream(openai, this.properties.model, this.messages)
 
 		this.currentStream = stream
 

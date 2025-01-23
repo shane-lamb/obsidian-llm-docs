@@ -11,7 +11,7 @@ export interface OpenaiSettings {
 
 export interface DefaultsSettings {
 	model: OpenaiModel
-	systemPrompt: string // todo: implement
+	systemPrompt: string
 }
 
 export enum OpenaiModel {

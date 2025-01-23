@@ -1,5 +1,6 @@
 import { request } from 'node:https'
 import { EventEmitter } from 'node:events'
+import { OpenaiModel, OpenaiSettings } from './settings'
 
 export const OpenaiDefaultModel = 'gpt-4o-mini'
 
@@ -14,16 +15,8 @@ export class OpenaiChatCompletionStream extends EventEmitter {
 	private currentRequest: ReturnType<typeof request>
 	private stopped = false
 
-	private readonly apiKey: string
-	private readonly messages: OpenaiMessage[]
-	private readonly model: string
-
-	constructor(settings: { apiKey: string, messages: OpenaiMessage[], model?: string }) {
+	constructor(private settings: OpenaiSettings, private model: OpenaiModel, private messages: OpenaiMessage[]) {
 		super()
-
-		this.apiKey = settings.apiKey
-		this.messages = settings.messages
-		this.model = settings.model ?? OpenaiDefaultModel
 	}
 
 	start() {
@@ -34,13 +27,13 @@ export class OpenaiChatCompletionStream extends EventEmitter {
 		})
 
 		const options = {
-			hostname: 'api.openai.com',
+			hostname: this.settings.host,
 			port: 443,
 			path: '/v1/chat/completions',
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
-				'Authorization': `Bearer ${this.apiKey}`,
+				'Authorization': `Bearer ${this.settings.apiKey}`,
 			},
 		}
 

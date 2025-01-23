@@ -9,9 +9,8 @@ import {
 	normalizePath,
 } from 'obsidian'
 
-import { OpenaiDefaultModel } from './open-ai'
 import { LlmDoc } from './llm-doc'
-import { defaultPluginSettings, PluginSettings } from './settings'
+import { defaultPluginSettings, OpenaiModel, PluginSettings } from './settings'
 import { llmDocsCodemirrorPlugin } from './editor-extension'
 
 export default class LlmDocsPlugin extends Plugin {
@@ -35,7 +34,7 @@ export default class LlmDocsPlugin extends Plugin {
 			id: 'complete',
 			name: 'Complete LLM document',
 			editorCallback: async (editor: Editor, view: MarkdownView) => {
-				const doc = await LlmDoc.fromFile(this.app, view.file!)
+				const doc = await LlmDoc.fromFile(this.app, view.file!, this.settings.defaults)
 
 				const onkeydown = (evt: KeyboardEvent)=> {
 					if (evt.key === 'Escape') {
@@ -83,13 +82,14 @@ export default class LlmDocsPlugin extends Plugin {
 			return
 		}
 
+		const { model, systemPrompt } = this.settings.defaults
 		// create the doc
 		const doc = await LlmDoc.create(
 			this.app,
 			freePath,
-			{model: OpenaiDefaultModel},
+			{model},
 			[
-				{role: 'system', content: 'system prompt here'},
+				{role: 'system', content: systemPrompt },
 				{role: 'user', content: ''}
 			]
 		)
@@ -157,6 +157,32 @@ class SettingsTab extends PluginSettingTab {
 				.setValue(this.plugin.settings.openai.host)
 				.onChange(async (value) => {
 					this.plugin.settings.openai.host = value
+					await this.plugin.saveSettings()
+				}))
+
+		const models: Record<OpenaiModel, string> = {
+			'gpt-4o': 'GPT-4o',
+			'gpt-4o-mini': 'GPT-4o mini',
+		}
+		new Setting(containerEl)
+			.setName('Default model')
+			.setDesc('The default LLM model variant to use for new LLM documents')
+			.addDropdown(dropdown => dropdown
+				.addOptions(models)
+				.setValue(this.plugin.settings.defaults.model)
+				.onChange(async (value) => {
+					this.plugin.settings.defaults.model = value as OpenaiModel
+					await this.plugin.saveSettings()
+				}))
+
+		new Setting(containerEl)
+			.setName('Default system prompt')
+			.setDesc('The default system prompt for new LLM documents')
+			.addText(text => text
+				.setPlaceholder('System prompt')
+				.setValue(this.plugin.settings.defaults.systemPrompt)
+				.onChange(async (value) => {
+					this.plugin.settings.defaults.systemPrompt = value
 					await this.plugin.saveSettings()
 				}))
 	}
