@@ -30,6 +30,10 @@ export function textToMessages(text: string): OpenaiMessage[] {
 		messages.push({ role: currentRole, content: currentLines.join('\n') })
 	}
 
+	if (!messages.length) {
+		messages.push({ role: 'user', content: text })
+	}
+
 	return messages
 }
 

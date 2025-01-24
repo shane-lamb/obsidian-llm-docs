@@ -15,6 +15,15 @@ describe('LLM doc util', () => {
 			const text = messagesToText(messages)
 			expect(text).toEqual(originalText)
 		})
+		it('should use whole text as user message when no explicit messages', () => {
+			const originalText = 'message'
+			const messages = textToMessages(originalText)
+			expect(messages).toEqual([
+				{ role: 'user', content: 'message' },
+			])
+			const text = messagesToText(messages)
+			expect(text).toEqual('# user\nmessage')
+		})
 	})
 	describe('messages preprocessing', () => {
 		it('should remove system prompt if it contains only whitespace', async () => {
