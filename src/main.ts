@@ -114,6 +114,11 @@ export default class LlmDocsPlugin extends Plugin {
 		// navigate to the doc
 		const leaf = this.app.workspace.getLeaf(false) // false = open in the current tab
 		await leaf.openFile(doc.file)
+		const active = this.app.workspace.activeEditor
+		const editor = active?.editor
+		if (editor) {
+			editor.setCursor({line: editor.lastLine(), ch: 0})
+		}
 	}
 
 	onunload() {
