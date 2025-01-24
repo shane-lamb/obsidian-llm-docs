@@ -67,8 +67,8 @@ export class LlmDoc {
 		}
 
 		let lastMessage = this.messages[this.messages.length - 1]
-		lastMessage.content = lastMessage.content.trimEnd()
 		if (lastMessage.role !== 'assistant') {
+			lastMessage.content = lastMessage.content.trimEnd()
 			this.messages.push({role: 'assistant', content: ''})
 		}
 
