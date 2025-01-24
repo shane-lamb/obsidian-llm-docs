@@ -1,7 +1,8 @@
 import { App, getFrontMatterInfo, TFile } from 'obsidian'
 import { FakeChatCompletionStream, OpenaiChatCompletionStream, OpenaiMessage } from './open-ai'
-import { messagesToText, textToMessages } from './llm-doc-util'
+import { messagesToText, preprocessMessages, textToMessages } from './llm-doc-util'
 import { DefaultsSettings, OpenaiModel, OpenaiSettings } from './settings'
+import { getLinkResolver } from './utils'
 
 export interface LlmDocProperties {
 	model: OpenaiModel
@@ -73,7 +74,11 @@ export class LlmDoc {
 
 		await this.write()
 
-		const stream = new completionStream(openai, this.properties.model, this.messages)
+		const stream = new completionStream(
+			openai,
+			this.properties.model,
+			await preprocessMessages(this.messages, getLinkResolver(this.app, this.file.path))
+		)
 
 		this.currentStream = stream
 

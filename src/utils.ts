@@ -1,9 +1,11 @@
 import { App } from 'obsidian'
 
-export async function getLinkText(app: App, link: string, sourcePath = ''): Promise<string | null> {
-	const file = app.metadataCache.getFirstLinkpathDest(link, sourcePath)
-	if (!file) {
-		return null
+export function getLinkResolver(app: App, sourcePath = ''): (link: string) => Promise<string | null> {
+	return async function linkResolver(link: string) {
+		const file = app.metadataCache.getFirstLinkpathDest(link, sourcePath)
+		if (!file) {
+			return null
+		}
+		return app.vault.cachedRead(file)
 	}
-	return app.vault.read(file)
 }
