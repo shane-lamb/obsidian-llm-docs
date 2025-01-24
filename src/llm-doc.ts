@@ -62,10 +62,6 @@ export class LlmDoc {
 	}
 
 	async complete(openai: OpenaiSettings) {
-		if (this.messages.length === 0) {
-			return // todo
-		}
-
 		let lastMessage = this.messages[this.messages.length - 1]
 		if (lastMessage.role !== 'assistant') {
 			lastMessage.content = lastMessage.content.trimEnd()

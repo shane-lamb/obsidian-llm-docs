@@ -2,8 +2,6 @@ import { request } from 'node:https'
 import { EventEmitter } from 'node:events'
 import { OpenaiModel, OpenaiSettings } from './settings'
 
-export const OpenaiDefaultModel = 'gpt-4o-mini'
-
 export interface OpenaiMessage {
 	role: 'user' | 'assistant' | 'system'
 	content: string
@@ -41,7 +39,27 @@ export class OpenaiChatCompletionStream extends EventEmitter {
 			res.on('data', (chunk) => {
 				if (this.stopped) return
 				try {
-					const lines = chunk.toString().split('\n')
+					const text = chunk.toString()
+					try {
+						const { error } = JSON.parse(text)
+						if (error) {
+							switch (error.code) {
+								case 'invalid_api_key':
+									this.emit('error', new Error('Invalid OpenAI API key'))
+									break
+								default:
+									if (error.message.startsWith("You didn't provide an API key")) {
+										this.emit('error', new Error('You must provide an OpenAI API key'))
+									} else {
+										this.emit('error', new Error(error.message))
+									}
+							}
+							this.stop()
+						}
+					} catch (error) {
+						// ignore
+					}
+					const lines = text.split('\n')
 					for (const line of lines) {
 						if (line.startsWith('data: ')) {
 							const jsonData = line.slice(6)

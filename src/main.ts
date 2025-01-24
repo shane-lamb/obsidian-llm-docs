@@ -61,8 +61,8 @@ export default class LlmDocsPlugin extends Plugin {
 					// todo handle situation where openai key empty or not valid
 					await doc.complete(this.settings.openai)
 					editor.setCursor({line: editor.lastLine(), ch: 0})
-				} catch (ex) {
-					console.log(ex)
+				} catch (error) {
+					new Notice(error)
 				}
 
 				document.removeEventListener('keydown', onkeydown)
