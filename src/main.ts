@@ -7,6 +7,7 @@ import {
 	Setting,
 	Notice,
 	normalizePath,
+	TFile,
 } from 'obsidian'
 
 import { LlmDoc } from './llm-doc'
@@ -17,6 +18,7 @@ import { OpenaiMessage } from './open-ai'
 export default class LlmDocsPlugin extends Plugin {
 	settings: PluginSettings
 	onkeydownListeners: ((evt: KeyboardEvent) => void)[] = []
+	filesBeingProcessed: Set<TFile> = new Set()
 
 	async onload() {
 		await this.loadSettings()
@@ -35,8 +37,13 @@ export default class LlmDocsPlugin extends Plugin {
 			id: 'complete',
 			name: 'Complete LLM document',
 			editorCallback: async (editor: Editor, view: MarkdownView) => {
-				const doc = await LlmDoc.fromFile(this.app, view.file!, this.settings.defaults)
+				const file: TFile = view.file!
+				if (this.filesBeingProcessed.has(file)) {
+					return
+				}
+				this.filesBeingProcessed.add(file)
 
+				let doc: LlmDoc
 				const onkeydown = (evt: KeyboardEvent)=> {
 					if (evt.key === 'Escape') {
 						doc.stop()
@@ -44,14 +51,23 @@ export default class LlmDocsPlugin extends Plugin {
 					}
 				}
 				this.onkeydownListeners.push(onkeydown)
-				document.addEventListener('keydown', onkeydown)
 
-				// todo handle situation where openai key empty or not valid
-				await doc.complete(this.settings.openai)
-				editor.setCursor({line: editor.lastLine(), ch: 0})
+				try {
+					// make sure current editor changes are readable from disk so as not to lose them
+					await view.save()
+
+					doc = await LlmDoc.fromFile(this.app, file, this.settings.defaults)
+					document.addEventListener('keydown', onkeydown)
+					// todo handle situation where openai key empty or not valid
+					await doc.complete(this.settings.openai)
+					editor.setCursor({line: editor.lastLine(), ch: 0})
+				} catch (ex) {
+					console.log(ex)
+				}
 
 				document.removeEventListener('keydown', onkeydown)
 				this.onkeydownListeners.remove(onkeydown)
+				this.filesBeingProcessed.delete(file)
 			}
 		})
 
