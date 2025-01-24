@@ -12,6 +12,7 @@ import {
 import { LlmDoc } from './llm-doc'
 import { defaultPluginSettings, OpenaiModel, PluginSettings } from './settings'
 import { llmDocsCodemirrorPlugin } from './editor-extension'
+import { OpenaiMessage } from './open-ai'
 
 export default class LlmDocsPlugin extends Plugin {
 	settings: PluginSettings
@@ -89,7 +90,7 @@ export default class LlmDocsPlugin extends Plugin {
 			freePath,
 			{model},
 			[
-				{role: 'system', content: systemPrompt },
+				...(systemPrompt.length ? [{role: 'system', content: systemPrompt } as OpenaiMessage] : []),
 				{role: 'user', content: ''}
 			]
 		)
