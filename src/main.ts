@@ -14,11 +14,11 @@ import { LlmDoc } from './llm-doc'
 import { defaultPluginSettings, OpenaiModel, PluginSettings } from './settings'
 import { llmDocsCodemirrorPlugin } from './editor-extension'
 import { OpenaiMessage } from './open-ai'
+import { filesBeingProcessed } from './registry'
 
 export default class LlmDocsPlugin extends Plugin {
 	settings: PluginSettings
 	onkeydownListeners: ((evt: KeyboardEvent) => void)[] = []
-	filesBeingProcessed: Set<TFile> = new Set()
 
 	async onload() {
 		await this.loadSettings()
@@ -38,10 +38,10 @@ export default class LlmDocsPlugin extends Plugin {
 			name: 'Complete LLM document',
 			editorCallback: async (editor: Editor, view: MarkdownView) => {
 				const file: TFile = view.file!
-				if (this.filesBeingProcessed.has(file)) {
+				if (filesBeingProcessed.has(file)) {
 					return
 				}
-				this.filesBeingProcessed.add(file)
+				filesBeingProcessed.add(file)
 
 				let doc: LlmDoc
 				const onkeydown = (evt: KeyboardEvent)=> {
@@ -67,7 +67,7 @@ export default class LlmDocsPlugin extends Plugin {
 
 				document.removeEventListener('keydown', onkeydown)
 				this.onkeydownListeners.remove(onkeydown)
-				this.filesBeingProcessed.delete(file)
+				filesBeingProcessed.delete(file)
 			}
 		})
 
