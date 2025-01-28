@@ -11,10 +11,11 @@ import {
 } from 'obsidian'
 
 import { LlmDoc } from './llm-doc'
-import { defaultPluginSettings, OpenaiModel, PluginSettings } from './settings'
+import { defaultPluginSettings, OpenaiModel, DocOpenMethods, PluginSettings } from './settings'
 import { llmDocsCodemirrorPlugin } from './editor-extension'
 import { OpenaiMessage } from './open-ai'
 import { filesBeingProcessed } from './registry'
+import { getLeaf } from './utils'
 
 export default class LlmDocsPlugin extends Plugin {
 	settings: PluginSettings
@@ -99,7 +100,7 @@ export default class LlmDocsPlugin extends Plugin {
 			return
 		}
 
-		const { model, systemPrompt } = this.settings.defaults
+		const { model, systemPrompt, docOpenMethod } = this.settings.defaults
 		// create the doc
 		const doc = await LlmDoc.create(
 			this.app,
@@ -112,7 +113,7 @@ export default class LlmDocsPlugin extends Plugin {
 		)
 
 		// navigate to the doc
-		const leaf = this.app.workspace.getLeaf(false) // false = open in the current tab
+		const leaf = getLeaf(this.app.workspace, docOpenMethod)
 		await leaf.openFile(doc.file)
 		const active = this.app.workspace.activeEditor
 		const editor = active?.editor
@@ -205,6 +206,23 @@ class SettingsTab extends PluginSettingTab {
 				.setValue(this.plugin.settings.defaults.systemPrompt)
 				.onChange(async (value) => {
 					this.plugin.settings.defaults.systemPrompt = value
+					await this.plugin.saveSettings()
+				}))
+
+		const documentOpenMethods: Record<DocOpenMethods, string> = {
+			'tab': 'a new tab',
+			'splitVertical': 'a new split (vertical)',
+			'splitHorizontal': 'a new split (horizontal)',
+			'window': 'a new window',
+			'replace': 'an existing tab',
+		}
+		new Setting(containerEl)
+			.setName('Create new documents in...')
+			.addDropdown(dropdown => dropdown
+				.addOptions(documentOpenMethods)
+				.setValue(this.plugin.settings.defaults.docOpenMethod)
+				.onChange(async (value) => {
+					this.plugin.settings.defaults.docOpenMethod = value as DocOpenMethods
 					await this.plugin.saveSettings()
 				}))
 	}

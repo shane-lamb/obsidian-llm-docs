@@ -9,9 +9,18 @@ export interface OpenaiSettings {
 	host: string
 }
 
+export enum DocOpenMethods {
+	replace = 'replace',
+	tab = 'tab',
+	splitVertical = 'splitVertical',
+	splitHorizontal = 'splitHorizontal',
+	window = 'window',
+}
+
 export interface DefaultsSettings {
 	model: OpenaiModel
 	systemPrompt: string
+	docOpenMethod: DocOpenMethods
 }
 
 export enum OpenaiModel {
@@ -27,6 +36,7 @@ export const defaultPluginSettings: PluginSettings = {
 	},
 	defaults: {
 		model: OpenaiModel.gpt4oMini,
-		systemPrompt: ''
-	}
+		systemPrompt: '',
+		docOpenMethod: DocOpenMethods.tab,
+	},
 }
