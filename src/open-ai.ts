@@ -90,6 +90,7 @@ export class OpenaiChatCompletionStream extends EventEmitter {
 			res.on('end', () => {
 				console.log('end') // todo: remove
 				this.emit('end')
+				this.removeAllListeners()
 			})
 		})
 
@@ -102,11 +103,22 @@ export class OpenaiChatCompletionStream extends EventEmitter {
 		req.end()
 	}
 
+	result() {
+		return new Promise<string>((resolve, reject) => {
+			this.on('error', (error) => reject(error))
+			this.on('end', () => resolve(this.entireContent))
+			this.start()
+		})
+	}
+
 	stop() {
 		if (this.currentRequest && !this.stopped) {
 			this.stopped = true
 			this.currentRequest.destroy()
+
+			// todo: necessary?
 			this.emit('end')
+			this.removeAllListeners()
 		}
 	}
 }

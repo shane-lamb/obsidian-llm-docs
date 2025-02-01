@@ -78,27 +78,11 @@ export class LlmDoc {
 
 		this.currentStream = stream
 
-		await new Promise<void>((resolve, reject) => {
-			const onData = (data: string) => {
-				this.app.vault.append(this.file, data)
-			}
-			stream.on('data', onData)
-
-			const onError = (error: any) => {
-			}
-			stream.on('error', (error) => {
-				reject(error)
-			})
-
-			stream.on('end', (data) => {
-				stream.off('data', onData)
-				stream.off('end', onData)
-				stream.off('error', onError)
-				resolve()
-			})
-
-			stream.start()
+		stream.on('data', (data: string) => {
+			this.app.vault.append(this.file, data)
 		})
+
+		await stream.result()
 
 		lastMessage = this.messages[this.messages.length - 1]
 		lastMessage.content += stream.entireContent
