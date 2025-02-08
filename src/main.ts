@@ -185,13 +185,13 @@ class SettingsTab extends PluginSettingTab {
 				}))
 
 		new Setting(containerEl)
-			.setName('OpenAI Hostname')
+			.setName('OpenAI base URL')
 			.setDesc('Change this if you want to use an OpenAI proxy or other OpenAI compatible API, rather than the official public API')
 			.addText(text => text
-				.setPlaceholder('api.openai.com')
-				.setValue(this.plugin.settings.openai.host)
+				.setPlaceholder('https://api.openai.com')
+				.setValue(this.plugin.settings.openai.baseUrl)
 				.onChange(async (value) => {
-					this.plugin.settings.openai.host = value
+					this.plugin.settings.openai.baseUrl = value
 					await this.plugin.saveSettings()
 				}))
 

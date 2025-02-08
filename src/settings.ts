@@ -6,7 +6,7 @@ export interface PluginSettings {
 
 export interface OpenaiSettings {
 	apiKey: string
-	host: string
+	baseUrl: string
 }
 
 export enum DocOpenMethods {
@@ -32,7 +32,7 @@ export const defaultPluginSettings: PluginSettings = {
 	docsDir: 'LLM',
 	openai: {
 		apiKey: '',
-		host: 'api.openai.com',
+		baseUrl: 'https://api.openai.com',
 	},
 	defaults: {
 		model: OpenaiModel.gpt4oMini,
