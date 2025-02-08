@@ -62,10 +62,10 @@ export class LlmDoc {
 	}
 
 	async complete(openai: OpenaiSettings) {
-		let lastMessage = this.messages[this.messages.length - 1]
-		if (lastMessage.role !== 'assistant') {
+		const lastMessage = this.messages[this.messages.length - 1]
+		const userIsLast = lastMessage.role !== 'assistant'
+		if (userIsLast) {
 			lastMessage.content = lastMessage.content.trimEnd()
-			this.messages.push({role: 'assistant', content: ''})
 		}
 
 		await this.write()
@@ -78,14 +78,23 @@ export class LlmDoc {
 
 		this.currentStream = stream
 
+		let headingAdded = !userIsLast
 		stream.on('data', (data: string) => {
-			this.app.vault.append(this.file, data)
+			if (headingAdded) {
+				this.app.vault.append(this.file, data)
+			} else {
+				headingAdded = true
+				this.app.vault.append(this.file, '\n# assistant\n' + data)
+			}
 		})
 
 		await stream.result()
 
-		lastMessage = this.messages[this.messages.length - 1]
-		lastMessage.content += stream.entireContent
+		if (userIsLast) {
+			this.messages.push({role: 'assistant', content: stream.entireContent})
+		} else {
+			lastMessage.content += stream.entireContent
+		}
 		this.messages.push({role: 'user', content: ''})
 		await this.write()
 	}
