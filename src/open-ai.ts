@@ -1,10 +1,24 @@
 import { EventEmitter } from 'node:events'
 import { OpenaiModel, OpenaiSettings } from './settings'
-import fetch from 'node-fetch'
+import fetch, { Response } from 'node-fetch'
 
 export interface OpenaiMessage {
 	role: 'user' | 'assistant' | 'system'
 	content: string
+}
+
+export async function getAvailableOpenaiModels(settings: OpenaiSettings): Promise<string[] | undefined> {
+	const response = await fetch(`${settings.baseUrl}/v1/models`, {
+		headers: {
+			'Content-Type': 'application/json',
+			'Authorization': `Bearer ${settings.apiKey}`,
+		},
+	})
+
+	await throwOnBadResponse(response)
+
+	const data = await response.json()
+	return data?.data.map((model: any) => model.id)
 }
 
 export class OpenaiChatCompletionStream extends EventEmitter {
@@ -28,9 +42,8 @@ export class OpenaiChatCompletionStream extends EventEmitter {
 		try {
 			await this.doRequest()
 		} catch (error) {
-			const mappedError = this.mapError(error)
-			if (mappedError) {
-				this.emit('error', mappedError)
+			if (error.name !== 'AbortError') {
+				this.emit('error', error)
 			}
 		} finally {
 			this.emit('end')
@@ -57,16 +70,7 @@ export class OpenaiChatCompletionStream extends EventEmitter {
 			signal: this.abortController.signal
 		})
 
-		if (!response.ok) {
-			let json: any
-			try {
-				json = await response.json()
-			}
-			catch (ex) {
-				throw new Error(`${response.status} ${response.statusText}`)
-			}
-			throw json.error
-		}
+		await throwOnBadResponse(response)
 
 		for await (const chunk of response.body!) {
 			const content = this.parseChunkForContent(chunk.toString())
@@ -97,22 +101,30 @@ export class OpenaiChatCompletionStream extends EventEmitter {
 			.join('')
 	}
 
-	private mapError(error: any): Error | null {
-		if (error.name === 'AbortError') {
-			return null // ignore
-		}
-		if (error.code === 'invalid_api_key') {
-			return new Error('Invalid OpenAI API key')
-		}
-		if (error.message.startsWith('You didn\'t provide an API key')) {
-			return new Error('You must provide an OpenAI API key')
-		}
-		return new Error(error.message)
-	}
-
 	stop() {
 		this.abortController?.abort()
 	}
+}
+
+async function throwOnBadResponse(response: Response) {
+	if (response.ok) {
+		return
+	}
+	let json: any
+	try {
+		json = await response.json()
+	}
+	catch (ex) {
+		throw new Error(`${response.status} ${response.statusText}`)
+	}
+	const error = json.error
+	if (error.code === 'invalid_api_key') {
+		throw new Error('Invalid OpenAI API key')
+	}
+	if (error.message.startsWith('You didn\'t provide an API key')) {
+		throw new Error('You must provide an OpenAI API key')
+	}
+	throw new Error(error.message)
 }
 
 export class FakeChatCompletionStream extends EventEmitter {

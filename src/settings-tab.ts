@@ -1,6 +1,7 @@
-import { App, PluginSettingTab, Setting, TextComponent } from 'obsidian'
+import { App, Notice, PluginSettingTab, Setting, TextComponent } from 'obsidian'
 import { DocOpenMethods, OpenaiModel } from './settings'
 import LlmDocsPlugin from './main'
+import { getAvailableOpenaiModels } from './open-ai'
 
 export class SettingsTab extends PluginSettingTab {
 	plugin: LlmDocsPlugin
@@ -104,6 +105,22 @@ export class SettingsTab extends PluginSettingTab {
 		item2.append(item2Link)
 		item2Link.textContent = 'http://localhost:11434'
 		list.append(item2)
+
+		desc.append(document.createElement('p'))
+
+		const button = document.createElement('button')
+		desc.append(button)
+		button.textContent = 'Test connection'
+		button.onclick = async () => {
+			button.disabled = true
+			try {
+				await getAvailableOpenaiModels(this.plugin.settings.openai)
+				new Notice('Connection success!')
+			} catch (error) {
+				new Notice(error)
+			}
+			button.disabled = false
+		}
 
 		let textComponent: TextComponent
 		new Setting(containerEl)
