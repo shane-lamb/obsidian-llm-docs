@@ -1,21 +1,12 @@
-import {
-	App,
-	Editor,
-	MarkdownView,
-	Plugin,
-	PluginSettingTab,
-	Setting,
-	Notice,
-	normalizePath,
-	TFile,
-} from 'obsidian'
+import { Editor, MarkdownView, Plugin, Notice, normalizePath, TFile } from 'obsidian'
 
 import { LlmDoc } from './llm-doc'
-import { defaultPluginSettings, OpenaiModel, DocOpenMethods, PluginSettings } from './settings'
+import { defaultPluginSettings, PluginSettings } from './settings'
 import { llmDocsCodemirrorPlugin } from './editor-extension'
 import { OpenaiMessage } from './open-ai'
 import { filesBeingProcessed, ILlmDocsPlugin, setLlmDocsPlugin } from './registry'
 import { getLeaf } from './utils'
+import { SettingsTab } from './settings-tab'
 
 export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 	settings: PluginSettings
@@ -146,96 +137,5 @@ export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings)
-	}
-}
-
-class SettingsTab extends PluginSettingTab {
-	plugin: LlmDocsPlugin
-
-	constructor(app: App, plugin: LlmDocsPlugin) {
-		super(app, plugin)
-		this.plugin = plugin
-	}
-
-	display(): void {
-		const {containerEl} = this
-
-		containerEl.empty()
-
-		new Setting(containerEl)
-			.setName('LLM docs directory')
-			.setDesc('The directory where new LLM documents will be created')
-			.addText(text => text
-				.setPlaceholder('path/to/directory')
-				.setValue(this.plugin.settings.docsDir)
-				.onChange(async (value) => {
-					this.plugin.settings.docsDir = value
-					await this.plugin.saveSettings()
-				}))
-
-		new Setting(containerEl)
-			.setName('OpenAI API Key')
-			.setDesc('Your OpenAI API key for generating LLM responses')
-			.addText(text => text
-				.setPlaceholder('API key')
-				.setValue(this.plugin.settings.openai.apiKey)
-				.onChange(async (value) => {
-					this.plugin.settings.openai.apiKey = value
-					await this.plugin.saveSettings()
-				}))
-
-		new Setting(containerEl)
-			.setName('OpenAI base URL')
-			.setDesc('Change this if you want to use an OpenAI proxy or other OpenAI compatible API, rather than the official public API')
-			.addText(text => text
-				.setPlaceholder('https://api.openai.com')
-				.setValue(this.plugin.settings.openai.baseUrl)
-				.onChange(async (value) => {
-					this.plugin.settings.openai.baseUrl = value
-					await this.plugin.saveSettings()
-				}))
-
-		const models: Record<OpenaiModel, string> = {
-			'gpt-4o': 'GPT-4o',
-			'gpt-4o-mini': 'GPT-4o mini',
-		}
-		new Setting(containerEl)
-			.setName('Default model')
-			.setDesc('The default LLM model variant to use for new LLM documents')
-			.addDropdown(dropdown => dropdown
-				.addOptions(models)
-				.setValue(this.plugin.settings.defaults.model)
-				.onChange(async (value) => {
-					this.plugin.settings.defaults.model = value as OpenaiModel
-					await this.plugin.saveSettings()
-				}))
-
-		new Setting(containerEl)
-			.setName('Default system prompt')
-			.setDesc('The default system prompt for new LLM documents')
-			.addText(text => text
-				.setPlaceholder('System prompt')
-				.setValue(this.plugin.settings.defaults.systemPrompt)
-				.onChange(async (value) => {
-					this.plugin.settings.defaults.systemPrompt = value
-					await this.plugin.saveSettings()
-				}))
-
-		const documentOpenMethods: Record<DocOpenMethods, string> = {
-			'tab': 'a new tab',
-			'splitVertical': 'a new split (vertical)',
-			'splitHorizontal': 'a new split (horizontal)',
-			'window': 'a new window',
-			'replace': 'an existing tab',
-		}
-		new Setting(containerEl)
-			.setName('Create new documents in...')
-			.addDropdown(dropdown => dropdown
-				.addOptions(documentOpenMethods)
-				.setValue(this.plugin.settings.defaults.docOpenMethod)
-				.onChange(async (value) => {
-					this.plugin.settings.defaults.docOpenMethod = value as DocOpenMethods
-					await this.plugin.saveSettings()
-				}))
 	}
 }
