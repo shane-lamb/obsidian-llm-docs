@@ -4,7 +4,13 @@ import { LlmDoc } from './llm-doc'
 import { defaultPluginSettings, PluginSettings } from './settings'
 import { llmDocsCodemirrorPlugin } from './editor-extension'
 import { OpenaiMessage } from './open-ai'
-import { filesBeingProcessed, ILlmDocsPlugin, setLlmDocsPlugin } from './registry'
+import {
+	fileProcessingStarted,
+	fileProcessingStopped,
+	ILlmDocsPlugin,
+	isFileBeingProcessed,
+	setLlmDocsPlugin
+} from './registry'
 import { getLeaf } from './utils'
 import { SettingsTab } from './settings-tab'
 
@@ -42,10 +48,10 @@ export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 	}
 
 	async completeDoc(editor: Editor, file: TFile) {
-		if (filesBeingProcessed.has(file)) {
+		if (isFileBeingProcessed(file)) {
 			return
 		}
-		filesBeingProcessed.add(file)
+		fileProcessingStarted(file)
 
 		let doc: LlmDoc
 
@@ -77,7 +83,8 @@ export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 
 		document.removeEventListener('keydown', onkeydown)
 		this.onkeydownListeners.remove(onkeydown)
-		filesBeingProcessed.delete(file)
+
+		fileProcessingStopped(file)
 	}
 
 	async createNewDoc() {

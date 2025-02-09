@@ -9,8 +9,9 @@ import {
 	WidgetType
 } from '@codemirror/view'
 import { RangeSetBuilder, Text } from '@codemirror/state'
-import { Editor, editorInfoField, TFile } from 'obsidian'
-import { filesBeingProcessed, getLlmDocsPlugin } from './registry'
+
+import { Editor, editorInfoField, getIcon, TFile } from 'obsidian'
+import { fileEvents, getLlmDocsPlugin, isFileBeingProcessed } from './registry'
 
 class LlmDocsCodemirrorPlugin implements PluginValue {
 	decorations: DecorationSet
@@ -101,9 +102,6 @@ class LlmDocsCodemirrorPlugin implements PluginValue {
 		if (doc.length > viewportEnd) {
 			return
 		}
-		if (filesBeingProcessed.has(this.file!)) {
-			return
-		}
 		const pos = lastLine.to
 		builder.add(
 			pos,
@@ -129,8 +127,14 @@ export const llmDocsCodemirrorPlugin = ViewPlugin.fromClass(
 )
 
 export class CompleteWidget extends WidgetType {
+	private button: HTMLButtonElement
+	private loadingIcon: HTMLSpanElement
+
 	constructor(private editor: Editor, private file: TFile) {
 		super()
+		this.onEvent = this.onEvent.bind(this)
+		this.button = document.createElement('button')
+		this.loadingIcon = document.createElement('span')
 	}
 
 	toDOM(view: EditorView): HTMLElement {
@@ -138,18 +142,44 @@ export class CompleteWidget extends WidgetType {
 		container.style.position = 'relative'
 		container.style.display = 'block'
 
-		const button = document.createElement('button')
+		const button = this.button
 		button.innerText = 'Complete'
-		button.style.position = 'absolute'
-		button.style.top = '100%'
-		button.style.marginTop = '1em'
 		button.onclick = async () => {
 			if (this.editor && this.file) {
+				this.editor.focus()
 				await getLlmDocsPlugin().completeDoc(this.editor, this.file)
 			}
 		}
+		button.style.position = 'absolute'
+		button.style.top = '100%'
+		button.style.marginTop = '1em'
 
-		container.appendChild(button)
+		const loadingIcon = this.loadingIcon
+		loadingIcon.append(getIcon('bot')!)
+		loadingIcon.style.opacity = '0.5'
+		loadingIcon.style.position = 'absolute'
+		loadingIcon.style.top = '100%'
+		loadingIcon.style.marginTop = '1em'
+
+		this.onEvent()
+		fileEvents.on('change', this.onEvent)
+
+		container.append(button, loadingIcon)
 		return container
+	}
+
+	onEvent() {
+		if (isFileBeingProcessed(this.file)) {
+			this.button.hide()
+			this.loadingIcon.show()
+		} else {
+			this.loadingIcon.hide()
+			this.button.show()
+		}
+	}
+
+	destroy(dom: HTMLElement) {
+		super.destroy(dom)
+		fileEvents.off('change', this.onEvent)
 	}
 }
