@@ -57,6 +57,17 @@ export class OpenaiChatCompletionStream extends EventEmitter {
 			signal: this.abortController.signal
 		})
 
+		if (!response.ok) {
+			let json: any
+			try {
+				json = await response.json()
+			}
+			catch (ex) {
+				throw new Error(`${response.status} ${response.statusText}`)
+			}
+			throw json.error
+		}
+
 		for await (const chunk of response.body!) {
 			const content = this.parseChunkForContent(chunk.toString())
 			if (content) {
@@ -66,9 +77,8 @@ export class OpenaiChatCompletionStream extends EventEmitter {
 		}
 	}
 
-	private parseChunkForContent(chunk: string): string | null {
-		const text = chunk.toString()
-		const lineContent = text
+	private parseChunkForContent(chunk: string): string {
+		return chunk.toString()
 			.split('\n')
 			.map(line => {
 				if(line.startsWith('data: ')) {
@@ -85,20 +95,6 @@ export class OpenaiChatCompletionStream extends EventEmitter {
 			})
 			.filter(data => data !== undefined)
 			.join('')
-		if (lineContent) {
-			return lineContent
-		}
-		let data: any
-		try {
-			data = JSON.parse(text)
-		}
-		catch (ex) {
-			return null
-		}
-		if (data.error) {
-			throw data.error
-		}
-		return null
 	}
 
 	private mapError(error: any): Error | null {
