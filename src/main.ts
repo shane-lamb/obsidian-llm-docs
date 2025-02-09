@@ -121,6 +121,7 @@ export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 		const active = this.app.workspace.activeEditor
 		const editor = active?.editor
 		if (editor) {
+			editor.focus()
 			editor.setCursor({line: editor.lastLine(), ch: 0})
 		}
 	}
