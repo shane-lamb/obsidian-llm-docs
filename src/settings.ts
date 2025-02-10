@@ -18,15 +18,17 @@ export enum DocOpenMethods {
 }
 
 export interface DefaultsSettings {
-	model: OpenaiModel
+	model: string
 	systemPrompt: string
 	docOpenMethod: DocOpenMethods
 }
 
-export enum OpenaiModel {
-	gpt4o = 'gpt-4o',
-	gpt4oMini = 'gpt-4o-mini',
+export const openaiModels = {
+	'gpt-4o': 'GPT-4o',
+	'gpt-4o-mini': 'GPT-4o mini',
 }
+
+const defaultModel: keyof typeof openaiModels = 'gpt-4o'
 
 export const defaultPluginSettings: PluginSettings = {
 	docsDir: 'LLM',
@@ -35,7 +37,7 @@ export const defaultPluginSettings: PluginSettings = {
 		baseUrl: 'https://api.openai.com',
 	},
 	defaults: {
-		model: OpenaiModel.gpt4oMini,
+		model: defaultModel,
 		systemPrompt: '',
 		docOpenMethod: DocOpenMethods.tab,
 	},

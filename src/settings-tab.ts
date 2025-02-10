@@ -1,5 +1,5 @@
 import { App, Notice, PluginSettingTab, Setting, TextComponent } from 'obsidian'
-import { DocOpenMethods, OpenaiModel } from './settings'
+import { DocOpenMethods, openaiModels } from './settings'
 import LlmDocsPlugin from './main'
 import { getAvailableOpenaiModels } from './open-ai'
 
@@ -40,20 +40,7 @@ export class SettingsTab extends PluginSettingTab {
 
 		this.addBaseURLSetting(containerEl)
 
-		const models: Record<OpenaiModel, string> = {
-			'gpt-4o': 'GPT-4o',
-			'gpt-4o-mini': 'GPT-4o mini',
-		}
-		new Setting(containerEl)
-			.setName('Default model')
-			.setDesc('The default LLM model variant to use for new LLM documents')
-			.addDropdown(dropdown => dropdown
-				.addOptions(models)
-				.setValue(this.plugin.settings.defaults.model)
-				.onChange(async (value) => {
-					this.plugin.settings.defaults.model = value as OpenaiModel
-					await this.plugin.saveSettings()
-				}))
+		this.addDefaultModelSetting(containerEl)
 
 		new Setting(containerEl)
 			.setName('Default system prompt')
@@ -82,6 +69,44 @@ export class SettingsTab extends PluginSettingTab {
 					this.plugin.settings.defaults.docOpenMethod = value as DocOpenMethods
 					await this.plugin.saveSettings()
 				}))
+	}
+
+	addDefaultModelSetting(containerEl: HTMLElement) {
+		const initialValue = this.plugin.settings.defaults.model
+		const initialValueIsOther = !Object.keys(openaiModels).includes(initialValue)
+		let textComponent: TextComponent
+		new Setting(containerEl)
+			.setName('Default model')
+			.setDesc('The default LLM model variant to use for new LLM documents')
+			.addDropdown(dropdown => {
+				dropdown
+					.addOptions({
+						...openaiModels,
+						'other': 'Custom'
+					})
+					.setValue(initialValueIsOther ? 'other' : initialValue)
+					.onChange(async (value) => {
+						if (value === 'other') {
+							textComponent.setDisabled(false)
+							textComponent.inputEl.focus()
+						} else {
+							textComponent.setDisabled(true)
+							textComponent.setValue(value)
+							this.plugin.settings.defaults.model = value
+							await this.plugin.saveSettings()
+						}
+					})
+			})
+			.addText(text => {
+				text
+					.setValue(initialValue)
+					.onChange(async (value) => {
+						this.plugin.settings.defaults.model = value
+						await this.plugin.saveSettings()
+					})
+					.setDisabled(!initialValueIsOther)
+				textComponent = text
+			})
 	}
 
 	addBaseURLSetting(containerEl: HTMLElement) {
