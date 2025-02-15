@@ -7,13 +7,31 @@ If your plugin does not need CSS, delete this file.
 
 */
 .llmdocs-heading-system {
-	color: cadetblue;
+	color: var(--color-cyan);
 }
 
 .llmdocs-heading-user {
-	color: green;
+	color: var(--color-green);
 }
 
 .llmdocs-heading-assistant {
-	color: darkorange;
+	color: var(--color-cyan);
+}
+
+.llmdocs-footer {
+	position: relative;
+	display: block;
+}
+
+.llmdocs-complete-button {
+	position: absolute;
+	top: 100%;
+	margin-top: 1em;
+}
+
+.llmdocs-loading-indicator {
+	position: absolute;
+	top: 100%;
+	margin-top: 1em;
+	opacity: 50%;
 }

@@ -1,12 +1,19 @@
-# Obsidian LLM docs (plugin)
+# Obsidian LLM docs
 
-This is a plugin for Obsidian (https://obsidian.md).
+This is a plugin for Obsidian (https://obsidian.md) that lets you chat with LLMs in plain markdown files!
+
+## Features
+
+- Use the same Obsidian markdown editor you know and love to chat with LLMs and freely edit conversation history
+- Integrates with the OpenAI API
+- Also works with self-hosted/local LLMs that expose an OpenAI-compatible API, like Ollama (https://ollama.com)
+- Can follow links to other Obsidian documents included in your prompt, making it easier to include additional context
 
 ## Dev installation
 
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+- Install/use the version of NodeJS specified in the `.tool-versions` file
+- Run `npm i` to install dependencies.
+- Run `npm run dev` to start compilation in watch mode.
 - Reload Obsidian.
 - Enable plugin in settings window.
 - For updates to the Obsidian API run `npm update` in the command line under your repo folder.
@@ -28,45 +35,3 @@ This is a plugin for Obsidian (https://obsidian.md).
 - Publish an initial version.
 - Make sure you have a `README.md` file in the root of your repo.
 - Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
-
-## Manually installing the plugin
-
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
-
-## Improve code quality with eslint (optional)
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- To use eslint with this project, make sure to install eslint from terminal:
-  - `npm install -g eslint`
-- To use eslint to analyze this project use this command:
-  - `eslint main.ts`
-  - eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder:
-  - `eslint .\src\`
-
-## Funding URL
-
-You can include funding URLs where people who use your plugin can financially support it.
-
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
-
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
-```
-
-If you have multiple URLs, you can also do:
-
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
-```
-
-## API Documentation
-
-See https://github.com/obsidianmd/obsidian-api

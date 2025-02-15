@@ -39,7 +39,7 @@ class LlmDocsCodemirrorPlugin implements PluginValue {
 		const {file, editor} = state.field(editorInfoField)
 		if (!file || !editor) {
 			// todo: unsure if this code would ever be reached
-			console.log('Could not decorate: missing file or editor', {file, editor})
+			console.error('Could not decorate: missing file or editor', {file, editor})
 			return Decoration.none
 		}
 
@@ -83,12 +83,12 @@ class LlmDocsCodemirrorPlugin implements PluginValue {
 			offset += line.length + 1
 		}
 
-		this.addCompleteButton(viewport, promptStart, doc, builder, file, editor)
+		this.addFooter(viewport, promptStart, doc, builder, file, editor)
 
 		return builder.finish()
 	}
 
-	addCompleteButton(
+	addFooter(
 		viewport: PosRange,
 		promptStart: number | null,
 		doc: Text,
@@ -112,7 +112,7 @@ class LlmDocsCodemirrorPlugin implements PluginValue {
 			pos,
 			pos,
 			Decoration.widget({
-				widget: new CompleteWidget(editor, file),
+				widget: new FooterWidget(editor, file),
 				side: 1
 			})
 		)
@@ -139,52 +139,46 @@ class LlmDocsCodemirrorPlugin implements PluginValue {
 	}
 }
 
-export class CompleteWidget extends WidgetType {
+export class FooterWidget extends WidgetType {
 	private button: HTMLButtonElement
-	private loadingIcon: HTMLSpanElement
+	private loadingIndicator: HTMLSpanElement
 
 	constructor(private editor: Editor, private file: TFile) {
 		super()
 		this.onEvent = this.onEvent.bind(this)
 		this.button = document.createElement('button')
-		this.loadingIcon = document.createElement('span')
+		this.loadingIndicator = document.createElement('span')
 	}
 
 	toDOM(view: EditorView): HTMLElement {
 		const container = document.createElement('span')
-		container.style.position = 'relative'
-		container.style.display = 'block'
+		container.className = 'llmdocs-footer'
 
 		const button = this.button
 		button.innerText = 'Complete'
+		button.className = 'llmdocs-complete-button'
 		button.onclick = async () => {
 			this.editor.focus()
 			await getLlmDocsPlugin().completeDoc(this.editor, this.file)
 		}
-		button.style.position = 'absolute'
-		button.style.top = '100%'
-		button.style.marginTop = '1em'
 
-		const loadingIcon = this.loadingIcon
-		loadingIcon.append(getIcon('bot')!)
-		loadingIcon.style.opacity = '0.5'
-		loadingIcon.style.position = 'absolute'
-		loadingIcon.style.top = '100%'
-		loadingIcon.style.marginTop = '1em'
+		const loadingIndicator = this.loadingIndicator
+		loadingIndicator.append(getIcon('bot')!)
+		loadingIndicator.className = 'llmdocs-loading-indicator'
 
 		this.onEvent()
 		fileEvents.on('change', this.onEvent)
 
-		container.append(button, loadingIcon)
+		container.append(button, loadingIndicator)
 		return container
 	}
 
 	onEvent() {
 		if (isFileBeingProcessed(this.file)) {
 			this.button.hide()
-			this.loadingIcon.show()
+			this.loadingIndicator.show()
 		} else {
-			this.loadingIcon.hide()
+			this.loadingIndicator.hide()
 			this.button.show()
 		}
 	}

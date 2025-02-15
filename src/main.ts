@@ -16,7 +16,6 @@ import { SettingsTab } from './settings-tab'
 
 export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 	settings: PluginSettings
-	onkeydownListeners: ((evt: KeyboardEvent) => void)[] = []
 
 	async onload() {
 		await this.loadSettings()
@@ -61,7 +60,6 @@ export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 				new Notice('Cancelling...')
 			}
 		}
-		this.onkeydownListeners.push(onkeydown)
 
 		try {
 			const view = this.app.workspace.getLeavesOfType('markdown').map(leaf => {
@@ -79,10 +77,9 @@ export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 			editor.setCursor({line: editor.lastLine(), ch: 0})
 		} catch (error) {
 			new Notice(error)
+		} finally {
+			document.removeEventListener('keydown', onkeydown)
 		}
-
-		document.removeEventListener('keydown', onkeydown)
-		this.onkeydownListeners.remove(onkeydown)
 
 		fileProcessingStopped(file)
 	}
@@ -134,9 +131,6 @@ export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 	}
 
 	onunload() {
-		for (const listener of this.onkeydownListeners) {
-			document.removeEventListener('keydown', listener)
-		}
 	}
 
 	async loadSettings() {
