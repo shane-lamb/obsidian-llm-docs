@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events'
-import { OpenaiModel, OpenaiSettings } from './settings'
+import { OpenaiSettings } from './settings'
 import fetch, { Response } from 'node-fetch'
 
 export interface OpenaiMessage {
@@ -17,7 +17,7 @@ export async function getAvailableOpenaiModels(settings: OpenaiSettings): Promis
 
 	await throwOnBadResponse(response)
 
-	const data = await response.json()
+	const data: any = await response.json()
 	return data?.data.map((model: any) => model.id)
 }
 
@@ -26,7 +26,7 @@ export class OpenaiChatCompletionStream extends EventEmitter {
 
 	private abortController?: AbortController
 
-	constructor(private settings: OpenaiSettings, private model: OpenaiModel, private messages: OpenaiMessage[]) {
+	constructor(private settings: OpenaiSettings, private model: string, private messages: OpenaiMessage[]) {
 		super()
 	}
 

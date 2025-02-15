@@ -1,11 +1,11 @@
 import { App, getFrontMatterInfo, TFile } from 'obsidian'
 import { FakeChatCompletionStream, OpenaiChatCompletionStream, OpenaiMessage } from './open-ai'
 import { messagesToText, preprocessMessages, textToMessages } from './llm-doc-util'
-import { DefaultsSettings, OpenaiModel, OpenaiSettings } from './settings'
+import { DefaultsSettings, OpenaiSettings } from './settings'
 import { getLinkResolver } from './utils'
 
 export interface LlmDocProperties {
-	model: OpenaiModel
+	model: string
 }
 
 type CompletionStream = OpenaiChatCompletionStream
