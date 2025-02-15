@@ -135,6 +135,7 @@ export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 
 	async loadSettings() {
 		this.settings = Object.assign({}, defaultPluginSettings, await this.loadData())
+		// todo: delete all keys (recursively) that are not in defaultPluginSettings
 	}
 
 	async saveSettings() {

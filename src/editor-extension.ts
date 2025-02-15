@@ -19,16 +19,20 @@ class LlmDocsCodemirrorPlugin implements PluginValue {
 	decorations: DecorationSet
 
 	constructor(private readonly view: EditorView) {
-		this.decorations = this.buildDecorations()
+		this.rebuild()
 	}
 
 	update(update: ViewUpdate) {
 		if (update.docChanged || update.viewportChanged) {
-			this.decorations = this.buildDecorations()
+			this.rebuild()
 		}
 	}
 
-	buildDecorations(): DecorationSet {
+	rebuild() {
+		this.decorations = this.buildDecorations()
+	}
+
+	private buildDecorations(): DecorationSet {
 		if (!this.enabled()) {
 			return Decoration.none
 		}
@@ -83,39 +87,52 @@ class LlmDocsCodemirrorPlugin implements PluginValue {
 			offset += line.length + 1
 		}
 
-		this.addFooter(viewport, promptStart, doc, builder, file, editor)
+		if (this.shouldAddFooter(doc, viewport, file, promptStart)) {
+			const lastLine = doc.line(doc.lines)
+			builder.add(
+				lastLine.to,
+				lastLine.to,
+				Decoration.widget({
+					widget: new FooterWidget(editor, file, this),
+					side: 1
+				})
+			)
+		}
 
 		return builder.finish()
 	}
 
-	addFooter(
-		viewport: PosRange,
-		promptStart: number | null,
+	shouldAddFooter(
 		doc: Text,
-		builder: RangeSetBuilder<Decoration>,
+		viewport: PosRange,
 		file: TFile,
-		editor: Editor
+		promptStart: number | null
 	) {
-		if (!promptStart) {
-			return
-		}
-		const promptText = doc.sliceString(promptStart).trim()
-		if (!promptText) {
-			return
-		}
-		const lastLine = doc.line(doc.lines)
+		// the bottom of the document isn't in view - don't add footer
 		if (doc.length > viewport.to) {
-			return
+			return false
 		}
-		const pos = lastLine.to
-		builder.add(
-			pos,
-			pos,
-			Decoration.widget({
-				widget: new FooterWidget(editor, file),
-				side: 1
-			})
-		)
+
+		// if a file is being processed we need to show the loading indicator
+		if (isFileBeingProcessed(file)) {
+			return true
+		}
+
+		// if a file isn't being processed then we should add footer if the button should be displayed...
+
+		// if there isn't a non-system prompt in view, don't show button
+		if (!promptStart) {
+			return false
+		}
+
+		// if the prompt text has nothing but whitespace, don't show
+		// if the prompt text ends with a newline, don't show (so vim normal mode cursor isn't replaced)
+		const promptText = doc.sliceString(promptStart)
+		if (!promptText.trim() || promptText[promptText.length - 1] === '\n') {
+			return false
+		}
+
+		return true
 	}
 
 	enabled() {
@@ -143,7 +160,7 @@ export class FooterWidget extends WidgetType {
 	private button: HTMLButtonElement
 	private loadingIndicator: HTMLSpanElement
 
-	constructor(private editor: Editor, private file: TFile) {
+	constructor(private editor: Editor, private file: TFile, private plugin: LlmDocsCodemirrorPlugin) {
 		super()
 		this.onEvent = this.onEvent.bind(this)
 		this.button = document.createElement('button')
@@ -166,20 +183,24 @@ export class FooterWidget extends WidgetType {
 		loadingIndicator.append(getIcon('bot')!)
 		loadingIndicator.className = 'llmdocs-loading-indicator'
 
-		this.onEvent()
+		this.onEvent(true)
 		fileEvents.on('change', this.onEvent)
 
 		container.append(button, loadingIndicator)
 		return container
 	}
 
-	onEvent() {
+	onEvent(calledOnInit: boolean) {
 		if (isFileBeingProcessed(this.file)) {
 			this.button.hide()
 			this.loadingIndicator.show()
 		} else {
 			this.loadingIndicator.hide()
-			this.button.show()
+			if (!calledOnInit) {
+				// Trigger deletion of widget by forcing update of plugin.
+				// The plugin doesn't update by itself since the processing status change comes AFTER the file is finished updating.
+				this.plugin.rebuild()
+			}
 		}
 	}
 
