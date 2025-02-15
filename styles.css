@@ -32,6 +32,10 @@ If your plugin does not need CSS, delete this file.
 .llmdocs-loading-indicator {
 	position: absolute;
 	top: 100%;
-	margin-top: 1em;
+	margin-top: 0.2em;
+}
+
+.llmdocs-loading-indicator svg {
+	padding-bottom: 14%; /* gives a better center for rotation - if rotation will be added later */
 	opacity: 50%;
 }
