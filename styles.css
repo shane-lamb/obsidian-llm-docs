@@ -35,7 +35,26 @@ If your plugin does not need CSS, delete this file.
 	margin-top: 0.2em;
 }
 
+@keyframes rotate90 {
+	0% {
+		transform: rotate(0deg);
+	}
+	25% {
+		transform: rotate(90deg);
+	}
+	50% {
+		transform: rotate(180deg);
+	}
+	75% {
+		transform: rotate(270deg);
+	}
+	100% {
+		transform: rotate(360deg);
+	}
+}
+
 .llmdocs-loading-indicator svg {
-	padding-bottom: 14%; /* gives a better center for rotation - if rotation will be added later */
+	padding-bottom: 14%; /* gives a better center for rotation */
 	opacity: 50%;
+	animation: rotate90 2s steps(1) infinite;
 }
