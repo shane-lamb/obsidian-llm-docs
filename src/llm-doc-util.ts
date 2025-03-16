@@ -1,10 +1,11 @@
-import { OpenaiMessage } from './open-ai'
+import { OpenaiBasicMessage, OpenaiContent, OpenaiMessage } from './open-ai'
+import { splitKeepingSeparators } from './utils'
 
-export function textToMessages(text: string): OpenaiMessage[] {
+export function textToMessages(text: string): OpenaiBasicMessage[] {
 	const lines = text.split('\n')
 	let currentRole: 'system' | 'user' | 'assistant' | null = null
 	let currentLines: string[] = []
-	const messages: OpenaiMessage[] = []
+	const messages: OpenaiBasicMessage[] = []
 	for (const line of lines) {
 		let newRole: 'system' | 'user' | 'assistant' | null = null
 		if (line === '# system') {
@@ -18,7 +19,7 @@ export function textToMessages(text: string): OpenaiMessage[] {
 		}
 		if (newRole) {
 			if (currentRole) {
-				messages.push({ role: currentRole, content: currentLines.join('\n') })
+				messages.push({role: currentRole, content: currentLines.join('\n')})
 			}
 			currentLines = []
 			currentRole = newRole
@@ -27,71 +28,77 @@ export function textToMessages(text: string): OpenaiMessage[] {
 		}
 	}
 	if (currentRole) {
-		messages.push({ role: currentRole, content: currentLines.join('\n') })
+		messages.push({role: currentRole, content: currentLines.join('\n')})
 	}
 
 	if (!messages.length) {
-		messages.push({ role: 'user', content: text })
+		messages.push({role: 'user', content: text})
 	}
 
 	return messages
 }
 
-export function messagesToText(messages: OpenaiMessage[]): string {
+export function messagesToText(messages: OpenaiBasicMessage[]): string {
 	const segments = messages.map((message) => `# ${message.role}\n${message.content}`)
 	return segments.join('\n')
 }
 
 export async function preprocessMessages(
-	messages: OpenaiMessage[],
-	linkResolver: (linkText: string) => Promise<string | null>
+	messages: OpenaiBasicMessage[],
+	textLinkResolver: (link: string) => Promise<string | null>,
+	imageLinkResolver: (link: string) => Promise<string | null>
 ): Promise<OpenaiMessage[]> {
 	const cleaned = messages.filter(msg => !(msg.role === 'system' && /^\s*$/.test(msg.content)))
-	const expanded = cleaned.map(async (msg) => {
+	const expandedPromises = cleaned.map(async (msg) => {
 		if (msg.role === 'assistant') {
 			return msg
 		}
+		const text = await expandLinks(msg.content, textLinkResolver)
+		const withImages = await resolveImages(text, imageLinkResolver)
 		return {
 			...msg,
-			content: await expandLinks(msg.content, linkResolver)
+			content: withImages
 		}
 	})
-	return Promise.all(expanded)
+	return Promise.all(expandedPromises)
 }
 
-// LLM generated
-async function expandLinks(content: string, linkResolver: (linkText: string) => Promise<string | null>): Promise<string> {
-	// Regular expression to match links in the content
-	const linkPattern = /\[\[(.*?)\]\]/g
-	let match
-	let resultContent = content
-
-	// Array to keep track of promises for resolving all links in the content
-	const promises = []
-
-	// Array to track original matches and their index positions
-	const matches = []
-
-	// Find all matches and prepare promises for link resolution
-	while ((match = linkPattern.exec(content)) !== null) {
-		const linkText = match[1]
-		matches.push({index: match.index, linkText})
-		promises.push(linkResolver(linkText))
-	}
-
-	// Await promises to resolve
-	const resolvedLinks = await Promise.all(promises)
-
-	// Replace links with resolved content or keep them unchanged if resolution failed
-	for (let i = matches.length - 1; i >= 0; i--) {
-		const {index, linkText} = matches[i]
-		const resolvedLink = resolvedLinks[i]
-
-		// If link is resolved, replace it with the resolved content
-		if (resolvedLink !== null) {
-			resultContent = resultContent.substring(0, index) + resolvedLink + resultContent.substring(index + linkText.length + 4)
+async function resolveImages(content: string, linkResolver: (linkText: string) => Promise<string | null>): Promise<OpenaiContent[] | string> {
+	const promises = splitLinks(content).map(async part => {
+		const textContent: OpenaiContent = {
+			type: 'text',
+			text: part.text
 		}
-	}
+		if (part.isSeparator) {
+			const resolved = await linkResolver(part.innerMatch!)
+			if (!resolved) {
+				return textContent
+			}
+			const imageContent: OpenaiContent = {
+				type: 'image_url',
+				image_url: {url: resolved}
+			}
+			return imageContent
+		}
+		return textContent
+	})
 
-	return resultContent
+	const parts = await Promise.all(promises)
+	if (parts.some((part) => part.type === 'image_url')) {
+		return parts
+	}
+	return content
 }
+
+async function expandLinks(content: string, linkResolver: (linkText: string) => Promise<string | null>): Promise<string> {
+	const promises = splitLinks(content).map(async part => {
+		if (part.isSeparator) {
+			const resolved = await linkResolver(part.innerMatch!)
+			return resolved ?? part.text
+		}
+		return part.text
+	})
+	return (await Promise.all(promises)).join('')
+}
+
+const splitLinks = (content: string) => splitKeepingSeparators(content, /!?\[\[(.+?)]]/g)

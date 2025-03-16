@@ -2,9 +2,24 @@ import { EventEmitter } from 'node:events'
 import { OpenaiSettings } from './settings'
 import fetch, { Response } from 'node-fetch'
 
-export interface OpenaiMessage {
-	role: 'user' | 'assistant' | 'system'
+export type OpenaiRole = 'user' | 'assistant' | 'system'
+
+export interface OpenaiBasicMessage {
+	role: OpenaiRole
 	content: string
+}
+
+export interface OpenaiMessage {
+	role: OpenaiRole
+	content: string | OpenaiContent[]
+}
+
+export interface OpenaiContent {
+	type: 'text' | 'image_url'
+	text?: string
+	image_url?: {
+		url: string
+	}
 }
 
 export async function getAvailableOpenaiModels(settings: OpenaiSettings): Promise<string[] | undefined> {
@@ -132,7 +147,7 @@ export class FakeChatCompletionStream extends EventEmitter {
 
 	private stopped = false
 
-	constructor(settings: { apiKey: string, messages: OpenaiMessage[], model?: string }) {
+	constructor(settings: { apiKey: string, messages: OpenaiBasicMessage[], model?: string }) {
 		super()
 	}
 

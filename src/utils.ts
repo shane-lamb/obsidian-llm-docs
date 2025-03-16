@@ -1,29 +1,30 @@
-import { App, Workspace } from 'obsidian'
-import { DocOpenMethods } from './settings'
-
-export function getLinkResolver(app: App, sourcePath = ''): (link: string) => Promise<string | null> {
-	return async function linkResolver(link: string) {
-		const file = app.metadataCache.getFirstLinkpathDest(link, sourcePath)
-		if (!file) {
-			return null
-		}
-		return app.vault.cachedRead(file)
-	}
+export interface SplitPart {
+	text: string
+	isSeparator?: true
+	innerMatch?: string
 }
 
-export function getLeaf(workspace: Workspace, method: DocOpenMethods) {
-	switch (method) {
-		case DocOpenMethods.replace:
-			return workspace.getLeaf()
-		case DocOpenMethods.tab:
-			return workspace.getLeaf('tab')
-		case DocOpenMethods.splitVertical:
-			return workspace.getLeaf('split', 'vertical')
-		case DocOpenMethods.splitHorizontal:
-			return workspace.getLeaf('split', 'horizontal')
-		case DocOpenMethods.window:
-			return workspace.getLeaf('window')
-		default:
-			return workspace.getLeaf('tab')
+export function splitKeepingSeparators(input: string, separator: RegExp): SplitPart[] {
+	const regex = new RegExp(separator)
+	const parts: SplitPart[] = []
+	let match: RegExpMatchArray | null
+	let lastPos = 0
+	while ((match = regex.exec(input)) !== null) {
+		const {index} = match
+		if (index === undefined) {
+			throw new Error('Index was undefined in splitKeepingSeparators()')
+		}
+		const before = input.substring(lastPos, match.index)
+		if (before) {
+			parts.push({text: before})
+		}
+		const text = match[0]
+		parts.push({text, isSeparator: true, innerMatch: match[1]})
+		lastPos = regex.lastIndex
 	}
+	const after = input.substring(lastPos)
+	if (after) {
+		parts.push({text: after})
+	}
+	return parts
 }

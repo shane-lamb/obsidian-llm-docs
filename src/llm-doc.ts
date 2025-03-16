@@ -1,8 +1,8 @@
 import { App, getFrontMatterInfo, TFile } from 'obsidian'
-import { FakeChatCompletionStream, OpenaiChatCompletionStream, OpenaiMessage } from './open-ai'
+import { OpenaiChatCompletionStream, OpenaiBasicMessage } from './open-ai'
 import { messagesToText, preprocessMessages, textToMessages } from './llm-doc-util'
 import { DefaultsSettings, OpenaiSettings } from './settings'
-import { getLinkResolver } from './utils'
+import { getImageLinkResolver, getDocLinkResolver } from './obsidian-utils'
 
 export interface LlmDocProperties {
 	model: string
@@ -17,7 +17,7 @@ export class LlmDoc {
 	private constructor(
 		private app: App,
 		public file: TFile,
-		private messages: OpenaiMessage[],
+		private messages: OpenaiBasicMessage[],
 		private properties: LlmDocProperties,
 	) {
 	}
@@ -37,7 +37,7 @@ export class LlmDoc {
 		return new LlmDoc(app, file, messages, properties)
 	}
 
-	static async create(app: App, path: string, properties: LlmDocProperties, messages: OpenaiMessage[]): Promise<LlmDoc> {
+	static async create(app: App, path: string, properties: LlmDocProperties, messages: OpenaiBasicMessage[]): Promise<LlmDoc> {
 		const text = messagesToText(messages)
 		const file = await app.vault.create(path, text)
 		await app.fileManager.processFrontMatter(file, (frontmatter) => {
@@ -73,7 +73,11 @@ export class LlmDoc {
 		const stream = new completionStream(
 			openai,
 			this.properties.model,
-			await preprocessMessages(this.messages, getLinkResolver(this.app, this.file.path))
+			await preprocessMessages(
+				this.messages,
+				getDocLinkResolver(this.app, this.file.path),
+				getImageLinkResolver(this.app, this.file.path),
+			)
 		)
 
 		this.currentStream = stream

@@ -3,7 +3,7 @@ import { Editor, MarkdownView, Plugin, Notice, normalizePath, TFile } from 'obsi
 import { LlmDoc } from './llm-doc'
 import { defaultPluginSettings, PluginSettings } from './settings'
 import { llmDocsCodemirrorPlugin } from './editor-extension'
-import { OpenaiMessage } from './open-ai'
+import { OpenaiBasicMessage } from './open-ai'
 import {
 	fileProcessingStarted,
 	fileProcessingStopped,
@@ -11,7 +11,7 @@ import {
 	isFileBeingProcessed,
 	setLlmDocsPlugin
 } from './registry'
-import { getLeaf } from './utils'
+import { getLeaf } from './obsidian-utils'
 import { SettingsTab } from './settings-tab'
 
 export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
@@ -114,7 +114,7 @@ export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 			freePath,
 			{model},
 			[
-				...(systemPrompt.length ? [{role: 'system', content: systemPrompt } as OpenaiMessage] : []),
+				...(systemPrompt.length ? [{role: 'system', content: systemPrompt } as OpenaiBasicMessage] : []),
 				{role: 'user', content: ''}
 			]
 		)

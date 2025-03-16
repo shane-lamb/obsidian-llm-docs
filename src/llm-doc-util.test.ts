@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals'
 import { messagesToText, preprocessMessages, textToMessages } from './llm-doc-util'
-import { OpenaiMessage } from './open-ai'
+import { OpenaiBasicMessage } from './open-ai'
 
 describe('LLM doc util', () => {
 	describe('text to messages (and back to text)', () => {
@@ -27,38 +27,68 @@ describe('LLM doc util', () => {
 	})
 	describe('messages preprocessing', () => {
 		it('should remove system prompt if it contains only whitespace', async () => {
-			const messages: OpenaiMessage[] = [
+			const messages: OpenaiBasicMessage[] = [
 				{ role: 'system', content: ' \n' },
 				{ role: 'user', content: 'message' },
 			]
-			const result = await preprocessMessages(messages, async () => null)
+			const result = await preprocessMessages(messages, nullResolver, nullResolver)
 			expect(result).toEqual([
 				{ role: 'user', content: 'message' },
 			])
 		})
 		it('should expand links in user/system messages but not in assistant messages', async () => {
-			const messages: OpenaiMessage[] = [
-				{ role: 'system', content: 'text [[mylink]] text' },
+			const messages: OpenaiBasicMessage[] = [
+				{ role: 'system', content: 'text [[mylink]] text [[mylink]]' },
 				{ role: 'user', content: 'text [[mylink]] text' },
 				{ role: 'assistant', content: 'text [[mylink]] text' },
 			]
 			const resolver = async () => 'resolved'
-			const result = await preprocessMessages(messages, resolver)
+			const result = await preprocessMessages(messages, resolver, nullResolver)
 			expect(result).toEqual([
-				{ role: 'system', content: 'text resolved text' },
+				{ role: 'system', content: 'text resolved text resolved' },
 				{ role: 'user', content: 'text resolved text' },
 				{ role: 'assistant', content: 'text [[mylink]] text' },
 			])
 		})
 		it('should leave links unchanged when they cannot be resolved', async () => {
-			const messages: OpenaiMessage[] = [
+			const messages: OpenaiBasicMessage[] = [
 				{ role: 'user', content: 'text [[mylink]] text' },
 			]
 			const resolver = async () => null
-			const result = await preprocessMessages(messages, resolver)
+			const result = await preprocessMessages(messages, resolver, nullResolver)
 			expect(result).toEqual([
 				{ role: 'user', content: 'text [[mylink]] text' },
 			])
 		})
+		it('should handle images', async () => {
+			const messages: OpenaiBasicMessage[] = [
+				{ role: 'user', content: 'Hello\n![[CleanShot 2025-03-12 at 13.11.51@2x.png]]\nworld.' },
+			]
+			const resolver = async () => 'data:image/jpeg;base64,{base64_image}'
+			const result = await preprocessMessages(messages, nullResolver, resolver)
+			expect(result).toEqual([
+				{
+					role: 'user',
+					content: [
+						{
+							type: 'text',
+							text: 'Hello\n'
+						},
+						{
+							type: 'image_url',
+							image_url: {
+								'url': 'data:image/jpeg;base64,{base64_image}'
+							}
+						},
+						{
+							type: 'text',
+							text: '\nworld.'
+						}
+					]
+				},
+			])
+		})
 	})
 })
+
+const nullResolver = async () => null
