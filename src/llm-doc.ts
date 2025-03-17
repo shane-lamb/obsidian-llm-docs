@@ -1,9 +1,9 @@
 import { App, getFrontMatterInfo, TFile } from 'obsidian'
 import { OpenaiChatCompletionStream, OpenaiBasicMessage } from './open-ai'
 import { messagesToText, preprocessMessages, textToMessages } from './llm-doc-util'
-import {DefaultsSettings, LlmConnectionSettings} from './settings'
+import { DefaultsSettings, LlmConnectionSettings } from './settings'
 import { getImageLinkResolver, getDocLinkResolver } from './obsidian-utils'
-import {resolveConnectionForModel} from "./connection-models";
+import { resolveConnectionForModel } from './connection-models'
 
 export interface LlmDocProperties {
 	model: string
@@ -20,25 +20,29 @@ export class LlmDoc {
 		public file: TFile,
 		private messages: OpenaiBasicMessage[],
 		private properties: LlmDocProperties,
-	) {
-	}
+	) {}
 
 	static async fromFile(app: App, file: TFile, defaults: DefaultsSettings): Promise<LlmDoc> {
 		let properties = {} as LlmDocProperties
 		await app.fileManager.processFrontMatter(file, (frontmatter) => {
 			properties = {
 				model: defaults.model,
-				...frontmatter
+				...frontmatter,
 			}
 		})
 		const text = await app.vault.read(file)
-		const {contentStart} = getFrontMatterInfo(text)
+		const { contentStart } = getFrontMatterInfo(text)
 		const withoutFrontmatter = text.slice(contentStart)
 		const messages = textToMessages(withoutFrontmatter)
 		return new LlmDoc(app, file, messages, properties)
 	}
 
-	static async create(app: App, path: string, properties: LlmDocProperties, messages: OpenaiBasicMessage[]): Promise<LlmDoc> {
+	static async create(
+		app: App,
+		path: string,
+		properties: LlmDocProperties,
+		messages: OpenaiBasicMessage[],
+	): Promise<LlmDoc> {
 		const text = messagesToText(messages)
 		const file = await app.vault.create(path, text)
 		await app.fileManager.processFrontMatter(file, (frontmatter) => {
@@ -53,7 +57,7 @@ export class LlmDoc {
 		})
 		const newMessagesText = messagesToText(this.messages)
 		const existingText = await this.app.vault.read(this.file)
-		const {contentStart} = getFrontMatterInfo(existingText)
+		const { contentStart } = getFrontMatterInfo(existingText)
 		const newText = existingText.slice(0, contentStart) + newMessagesText
 		await this.app.vault.modify(this.file, newText)
 	}
@@ -83,7 +87,7 @@ export class LlmDoc {
 				this.messages,
 				getDocLinkResolver(this.app, this.file.path),
 				getImageLinkResolver(this.app, this.file.path),
-			)
+			),
 		)
 
 		this.currentStream = stream
@@ -101,11 +105,11 @@ export class LlmDoc {
 		await stream.result()
 
 		if (userIsLast) {
-			this.messages.push({role: 'assistant', content: stream.entireContent})
+			this.messages.push({ role: 'assistant', content: stream.entireContent })
 		} else {
 			lastMessage.content += stream.entireContent
 		}
-		this.messages.push({role: 'user', content: ''})
+		this.messages.push({ role: 'user', content: '' })
 		await this.write()
 	}
 }

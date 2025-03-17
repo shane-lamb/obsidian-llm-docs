@@ -19,9 +19,9 @@ export function fileProcessingStopped(file: TFile) {
 }
 
 export interface ILlmDocsPlugin {
-    completeDoc: (editor: Editor, file: TFile) => Promise<void>
+	completeDoc: (editor: Editor, file: TFile) => Promise<void>
 }
 
 let llmDocsPlugin: ILlmDocsPlugin
 export const getLlmDocsPlugin = () => llmDocsPlugin
-export const setLlmDocsPlugin = (plugin: ILlmDocsPlugin) => llmDocsPlugin = plugin
+export const setLlmDocsPlugin = (plugin: ILlmDocsPlugin) => (llmDocsPlugin = plugin)

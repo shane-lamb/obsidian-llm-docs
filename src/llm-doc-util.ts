@@ -19,7 +19,7 @@ export function textToMessages(text: string): OpenaiBasicMessage[] {
 		}
 		if (newRole) {
 			if (currentRole) {
-				messages.push({role: currentRole, content: currentLines.join('\n')})
+				messages.push({ role: currentRole, content: currentLines.join('\n') })
 			}
 			currentLines = []
 			currentRole = newRole
@@ -28,11 +28,11 @@ export function textToMessages(text: string): OpenaiBasicMessage[] {
 		}
 	}
 	if (currentRole) {
-		messages.push({role: currentRole, content: currentLines.join('\n')})
+		messages.push({ role: currentRole, content: currentLines.join('\n') })
 	}
 
 	if (!messages.length) {
-		messages.push({role: 'user', content: text})
+		messages.push({ role: 'user', content: text })
 	}
 
 	return messages
@@ -46,9 +46,9 @@ export function messagesToText(messages: OpenaiBasicMessage[]): string {
 export async function preprocessMessages(
 	messages: OpenaiBasicMessage[],
 	textLinkResolver: (link: string) => Promise<string | null>,
-	imageLinkResolver: (link: string) => Promise<string | null>
+	imageLinkResolver: (link: string) => Promise<string | null>,
 ): Promise<OpenaiMessage[]> {
-	const cleaned = messages.filter(msg => !(msg.role === 'system' && /^\s*$/.test(msg.content)))
+	const cleaned = messages.filter((msg) => !(msg.role === 'system' && /^\s*$/.test(msg.content)))
 	const expandedPromises = cleaned.map(async (msg) => {
 		if (msg.role === 'assistant') {
 			return msg
@@ -57,17 +57,20 @@ export async function preprocessMessages(
 		const withImages = await resolveImages(text, imageLinkResolver)
 		return {
 			...msg,
-			content: withImages
+			content: withImages,
 		}
 	})
 	return Promise.all(expandedPromises)
 }
 
-async function resolveImages(content: string, linkResolver: (linkText: string) => Promise<string | null>): Promise<OpenaiContent[] | string> {
-	const promises = splitLinks(content).map(async part => {
+async function resolveImages(
+	content: string,
+	linkResolver: (linkText: string) => Promise<string | null>,
+): Promise<OpenaiContent[] | string> {
+	const promises = splitLinks(content).map(async (part) => {
 		const textContent: OpenaiContent = {
 			type: 'text',
-			text: part.text
+			text: part.text,
 		}
 		if (part.isSeparator) {
 			const resolved = await linkResolver(part.innerMatch!)
@@ -76,7 +79,7 @@ async function resolveImages(content: string, linkResolver: (linkText: string) =
 			}
 			const imageContent: OpenaiContent = {
 				type: 'image_url',
-				image_url: {url: resolved}
+				image_url: { url: resolved },
 			}
 			return imageContent
 		}
@@ -90,8 +93,11 @@ async function resolveImages(content: string, linkResolver: (linkText: string) =
 	return content
 }
 
-async function expandLinks(content: string, linkResolver: (linkText: string) => Promise<string | null>): Promise<string> {
-	const promises = splitLinks(content).map(async part => {
+async function expandLinks(
+	content: string,
+	linkResolver: (linkText: string) => Promise<string | null>,
+): Promise<string> {
+	const promises = splitLinks(content).map(async (part) => {
 		if (part.isSeparator) {
 			const resolved = await linkResolver(part.innerMatch!)
 			return resolved ?? part.text

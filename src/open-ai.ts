@@ -26,7 +26,7 @@ export async function getAvailableOpenaiModels(settings: LlmConnectionSettings):
 	const response = await fetch(`${settings.baseUrl}/v1/models`, {
 		headers: {
 			'Content-Type': 'application/json',
-			'Authorization': `Bearer ${settings.apiKey}`,
+			Authorization: `Bearer ${settings.apiKey}`,
 		},
 	})
 
@@ -41,7 +41,11 @@ export class OpenaiChatCompletionStream extends EventEmitter {
 
 	private abortController?: AbortController
 
-	constructor(private settings: LlmConnectionSettings, private model: string, private messages: OpenaiMessage[]) {
+	constructor(
+		private settings: LlmConnectionSettings,
+		private model: string,
+		private messages: OpenaiMessage[],
+	) {
 		super()
 	}
 
@@ -80,9 +84,9 @@ export class OpenaiChatCompletionStream extends EventEmitter {
 			body: data,
 			headers: {
 				'Content-Type': 'application/json',
-				'Authorization': `Bearer ${this.settings.apiKey}`,
+				Authorization: `Bearer ${this.settings.apiKey}`,
 			},
-			signal: this.abortController.signal
+			signal: this.abortController.signal,
 		})
 
 		await throwOnBadResponse(response)
@@ -97,22 +101,22 @@ export class OpenaiChatCompletionStream extends EventEmitter {
 	}
 
 	private parseChunkForContent(chunk: string): string {
-		return chunk.toString()
+		return chunk
+			.toString()
 			.split('\n')
-			.map(line => {
-				if(line.startsWith('data: ')) {
+			.map((line) => {
+				if (line.startsWith('data: ')) {
 					const json = line.slice(6)
 					try {
 						const data = JSON.parse(json)
 						return data?.choices[0]?.delta?.content
-					}
-					catch (ex) {
+					} catch (ex) {
 						return undefined
 					}
 				}
 				return undefined
 			})
-			.filter(data => data !== undefined)
+			.filter((data) => data !== undefined)
 			.join('')
 	}
 
@@ -128,15 +132,14 @@ async function throwOnBadResponse(response: Response) {
 	let json: any
 	try {
 		json = await response.json()
-	}
-	catch (ex) {
+	} catch (ex) {
 		throw new Error(`${response.status} ${response.statusText}`)
 	}
 	const error = json.error
 	if (error.code === 'invalid_api_key') {
 		throw new Error('Invalid OpenAI API key')
 	}
-	if (error.message.startsWith('You didn\'t provide an API key')) {
+	if (error.message.startsWith("You didn't provide an API key")) {
 		throw new Error('You must provide an OpenAI API key')
 	}
 	throw new Error(error.message)
@@ -147,7 +150,7 @@ export class FakeChatCompletionStream extends EventEmitter {
 
 	private stopped = false
 
-	constructor(settings: { apiKey: string, messages: OpenaiBasicMessage[], model?: string }) {
+	constructor(settings: { apiKey: string; messages: OpenaiBasicMessage[]; model?: string }) {
 		super()
 	}
 

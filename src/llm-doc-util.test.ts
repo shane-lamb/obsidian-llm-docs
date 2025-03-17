@@ -18,9 +18,7 @@ describe('LLM doc util', () => {
 		it('should use whole text as user message when no explicit messages', () => {
 			const originalText = 'message'
 			const messages = textToMessages(originalText)
-			expect(messages).toEqual([
-				{ role: 'user', content: 'message' },
-			])
+			expect(messages).toEqual([{ role: 'user', content: 'message' }])
 			const text = messagesToText(messages)
 			expect(text).toEqual('# user\nmessage')
 		})
@@ -32,9 +30,7 @@ describe('LLM doc util', () => {
 				{ role: 'user', content: 'message' },
 			]
 			const result = await preprocessMessages(messages, nullResolver, nullResolver)
-			expect(result).toEqual([
-				{ role: 'user', content: 'message' },
-			])
+			expect(result).toEqual([{ role: 'user', content: 'message' }])
 		})
 		it('should expand links in user/system messages but not in assistant messages', async () => {
 			const messages: OpenaiBasicMessage[] = [
@@ -51,14 +47,10 @@ describe('LLM doc util', () => {
 			])
 		})
 		it('should leave links unchanged when they cannot be resolved', async () => {
-			const messages: OpenaiBasicMessage[] = [
-				{ role: 'user', content: 'text [[mylink]] text' },
-			]
+			const messages: OpenaiBasicMessage[] = [{ role: 'user', content: 'text [[mylink]] text' }]
 			const resolver = async () => null
 			const result = await preprocessMessages(messages, resolver, nullResolver)
-			expect(result).toEqual([
-				{ role: 'user', content: 'text [[mylink]] text' },
-			])
+			expect(result).toEqual([{ role: 'user', content: 'text [[mylink]] text' }])
 		})
 		it('should handle images', async () => {
 			const messages: OpenaiBasicMessage[] = [
@@ -72,19 +64,19 @@ describe('LLM doc util', () => {
 					content: [
 						{
 							type: 'text',
-							text: 'Hello\n'
+							text: 'Hello\n',
 						},
 						{
 							type: 'image_url',
 							image_url: {
-								'url': 'data:image/jpeg;base64,{base64_image}'
-							}
+								url: 'data:image/jpeg;base64,{base64_image}',
+							},
 						},
 						{
 							type: 'text',
-							text: '\nworld.'
-						}
-					]
+							text: '\nworld.',
+						},
+					],
 				},
 			])
 		})

@@ -9,7 +9,7 @@ import {
 	fileProcessingStopped,
 	ILlmDocsPlugin,
 	isFileBeingProcessed,
-	setLlmDocsPlugin
+	setLlmDocsPlugin,
 } from './registry'
 import { getLeaf } from './obsidian-utils'
 import { SettingsTab } from './settings-tab'
@@ -29,7 +29,7 @@ export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 		this.addCommand({
 			id: 'create',
 			name: 'Create new LLM document',
-			callback: () => this.createNewDoc()
+			callback: () => this.createNewDoc(),
 		})
 
 		this.addCommand({
@@ -38,7 +38,7 @@ export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 			editorCallback: async (editor, view) => {
 				const file: TFile = view.file!
 				await this.completeDoc(editor, file)
-			}
+			},
 		})
 
 		this.addSettingTab(new SettingsTab(this.app, this))
@@ -62,10 +62,13 @@ export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 		}
 
 		try {
-			const view = this.app.workspace.getLeavesOfType('markdown').map(leaf => {
-				const view = leaf.view as MarkdownView
-				return view.file === file ? view : undefined
-			}).filter(Boolean)[0]
+			const view = this.app.workspace
+				.getLeavesOfType('markdown')
+				.map((leaf) => {
+					const view = leaf.view as MarkdownView
+					return view.file === file ? view : undefined
+				})
+				.filter(Boolean)[0]
 			if (view) {
 				// make sure current editor changes are readable from disk so as not to lose them
 				await view.save()
@@ -74,7 +77,7 @@ export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 			doc = await LlmDoc.fromFile(this.app, file, this.settings.defaults)
 			document.addEventListener('keydown', onkeydown)
 			await doc.complete(this.settings.connections)
-			editor.setCursor({line: editor.lastLine(), ch: 0})
+			editor.setCursor({ line: editor.lastLine(), ch: 0 })
 		} catch (error) {
 			new Notice(error)
 		} finally {
@@ -103,21 +106,16 @@ export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 			}
 		}
 		if (!freePath) {
-			new Notice('You\'re on fire!')
+			new Notice("You're on fire!")
 			return
 		}
 
 		const { model, systemPrompt, docOpenMethod } = this.settings.defaults
 		// create the doc
-		const doc = await LlmDoc.create(
-			this.app,
-			freePath,
-			{model},
-			[
-				...(systemPrompt.length ? [{role: 'system', content: systemPrompt } as OpenaiBasicMessage] : []),
-				{role: 'user', content: ''}
-			]
-		)
+		const doc = await LlmDoc.create(this.app, freePath, { model }, [
+			...(systemPrompt.length ? [{ role: 'system', content: systemPrompt } as OpenaiBasicMessage] : []),
+			{ role: 'user', content: '' },
+		])
 
 		// navigate to the doc
 		const leaf = getLeaf(this.app.workspace, docOpenMethod)
@@ -126,12 +124,11 @@ export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 		const editor = active?.editor
 		if (editor) {
 			editor.focus()
-			editor.setCursor({line: editor.lastLine(), ch: 0})
+			editor.setCursor({ line: editor.lastLine(), ch: 0 })
 		}
 	}
 
-	onunload() {
-	}
+	onunload() {}
 
 	async loadSettings() {
 		this.settings = Object.assign({}, defaultPluginSettings, await this.loadData())

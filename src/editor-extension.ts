@@ -6,14 +6,14 @@ import {
 	PluginValue,
 	ViewPlugin,
 	ViewUpdate,
-	WidgetType
+	WidgetType,
 } from '@codemirror/view'
 import { RangeSetBuilder, Text } from '@codemirror/state'
 
 import { Editor, editorInfoField, getIcon, TFile } from 'obsidian'
 import { fileEvents, getLlmDocsPlugin, isFileBeingProcessed } from './registry'
 
-type PosRange = { from: number, to: number }
+type PosRange = { from: number; to: number }
 
 class LlmDocsCodemirrorPlugin implements PluginValue {
 	decorations: DecorationSet
@@ -37,13 +37,13 @@ class LlmDocsCodemirrorPlugin implements PluginValue {
 			return Decoration.none
 		}
 
-		const {state, viewport} = this.view
-		const {doc} = state
+		const { state, viewport } = this.view
+		const { doc } = state
 
-		const {file, editor} = state.field(editorInfoField)
+		const { file, editor } = state.field(editorInfoField)
 		if (!file || !editor) {
 			// todo: unsure if this code would ever be reached
-			console.error('Could not decorate: missing file or editor', {file, editor})
+			console.error('Could not decorate: missing file or editor', { file, editor })
 			return Decoration.none
 		}
 
@@ -61,8 +61,8 @@ class LlmDocsCodemirrorPlugin implements PluginValue {
 						offset,
 						offset + line.length,
 						Decoration.mark({
-							class: 'llmdocs-heading-system'
-						})
+							class: 'llmdocs-heading-system',
+						}),
 					)
 				} else if (line === '# user') {
 					promptStart = offset + line.length
@@ -70,8 +70,8 @@ class LlmDocsCodemirrorPlugin implements PluginValue {
 						offset,
 						promptStart,
 						Decoration.mark({
-							class: 'llmdocs-heading-user'
-						})
+							class: 'llmdocs-heading-user',
+						}),
 					)
 				} else if (line === '# assistant') {
 					promptStart = offset + line.length
@@ -79,8 +79,8 @@ class LlmDocsCodemirrorPlugin implements PluginValue {
 						offset,
 						promptStart,
 						Decoration.mark({
-							class: 'llmdocs-heading-assistant'
-						})
+							class: 'llmdocs-heading-assistant',
+						}),
 					)
 				}
 			}
@@ -94,20 +94,15 @@ class LlmDocsCodemirrorPlugin implements PluginValue {
 				lastLine.to,
 				Decoration.widget({
 					widget: new FooterWidget(editor, file, this),
-					side: 1
-				})
+					side: 1,
+				}),
 			)
 		}
 
 		return builder.finish()
 	}
 
-	shouldAddFooter(
-		doc: Text,
-		viewport: PosRange,
-		file: TFile,
-		promptStart: number | null
-	) {
+	shouldAddFooter(doc: Text, viewport: PosRange, file: TFile, promptStart: number | null) {
 		// the bottom of the document isn't in view - don't add footer
 		if (doc.length > viewport.to) {
 			return false
@@ -152,15 +147,18 @@ class LlmDocsCodemirrorPlugin implements PluginValue {
 		return false
 	}
 
-	destroy() {
-	}
+	destroy() {}
 }
 
 export class FooterWidget extends WidgetType {
 	private button: HTMLButtonElement
 	private loadingIndicator: HTMLSpanElement
 
-	constructor(private editor: Editor, private file: TFile, private plugin: LlmDocsCodemirrorPlugin) {
+	constructor(
+		private editor: Editor,
+		private file: TFile,
+		private plugin: LlmDocsCodemirrorPlugin,
+	) {
 		super()
 		this.onEvent = this.onEvent.bind(this)
 		this.button = document.createElement('button')
@@ -214,7 +212,4 @@ const pluginSpec: PluginSpec<LlmDocsCodemirrorPlugin> = {
 	decorations: (value: LlmDocsCodemirrorPlugin) => value.decorations,
 }
 
-export const llmDocsCodemirrorPlugin = ViewPlugin.fromClass(
-	LlmDocsCodemirrorPlugin,
-	pluginSpec
-)
+export const llmDocsCodemirrorPlugin = ViewPlugin.fromClass(LlmDocsCodemirrorPlugin, pluginSpec)
