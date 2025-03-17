@@ -1,8 +1,9 @@
 import { App, getFrontMatterInfo, TFile } from 'obsidian'
 import { OpenaiChatCompletionStream, OpenaiBasicMessage } from './open-ai'
 import { messagesToText, preprocessMessages, textToMessages } from './llm-doc-util'
-import { DefaultsSettings, OpenaiSettings } from './settings'
+import {DefaultsSettings, LlmConnectionSettings} from './settings'
 import { getImageLinkResolver, getDocLinkResolver } from './obsidian-utils'
+import {resolveConnectionForModel} from "./connection-models";
 
 export interface LlmDocProperties {
 	model: string
@@ -61,7 +62,12 @@ export class LlmDoc {
 		this.currentStream?.stop()
 	}
 
-	async complete(openai: OpenaiSettings) {
+	async complete(connections: LlmConnectionSettings[]) {
+		const connectionSettings = await resolveConnectionForModel(connections, this.properties.model)
+		if (!connectionSettings) {
+			throw new Error(`No connection found for model "${this.properties.model}"`)
+		}
+
 		const lastMessage = this.messages[this.messages.length - 1]
 		const userIsLast = lastMessage.role !== 'assistant'
 		if (userIsLast) {
@@ -71,7 +77,7 @@ export class LlmDoc {
 		await this.write()
 
 		const stream = new completionStream(
-			openai,
+			connectionSettings,
 			this.properties.model,
 			await preprocessMessages(
 				this.messages,

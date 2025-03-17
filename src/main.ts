@@ -73,7 +73,7 @@ export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 
 			doc = await LlmDoc.fromFile(this.app, file, this.settings.defaults)
 			document.addEventListener('keydown', onkeydown)
-			await doc.complete(this.settings.openai)
+			await doc.complete(this.settings.connections)
 			editor.setCursor({line: editor.lastLine(), ch: 0})
 		} catch (error) {
 			new Notice(error)

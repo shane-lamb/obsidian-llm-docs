@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events'
-import { OpenaiSettings } from './settings'
+import { LlmConnectionSettings } from './settings'
 import fetch, { Response } from 'node-fetch'
 
 export type OpenaiRole = 'user' | 'assistant' | 'system'
@@ -22,7 +22,7 @@ export interface OpenaiContent {
 	}
 }
 
-export async function getAvailableOpenaiModels(settings: OpenaiSettings): Promise<string[] | undefined> {
+export async function getAvailableOpenaiModels(settings: LlmConnectionSettings): Promise<string[] | undefined> {
 	const response = await fetch(`${settings.baseUrl}/v1/models`, {
 		headers: {
 			'Content-Type': 'application/json',
@@ -41,7 +41,7 @@ export class OpenaiChatCompletionStream extends EventEmitter {
 
 	private abortController?: AbortController
 
-	constructor(private settings: OpenaiSettings, private model: string, private messages: OpenaiMessage[]) {
+	constructor(private settings: LlmConnectionSettings, private model: string, private messages: OpenaiMessage[]) {
 		super()
 	}
 

@@ -1,12 +1,7 @@
 export interface PluginSettings {
 	docsDir: string
-	openai: OpenaiSettings
+	connections: LlmConnectionSettings[]
 	defaults: DefaultsSettings
-}
-
-export interface OpenaiSettings {
-	apiKey: string
-	baseUrl: string
 }
 
 export enum DocOpenMethods {
@@ -28,14 +23,17 @@ export const openaiModels = {
 	'gpt-4o-mini': 'GPT-4o mini',
 }
 
+export interface LlmConnectionSettings {
+	type: 'OpenAI' // 'Anthropic' and other types in future
+	baseUrl: string
+	apiKey: string
+}
+
 const defaultModel: keyof typeof openaiModels = 'gpt-4o'
 
 export const defaultPluginSettings: PluginSettings = {
 	docsDir: 'LLM',
-	openai: {
-		apiKey: '',
-		baseUrl: 'https://api.openai.com',
-	},
+	connections: [],
 	defaults: {
 		model: defaultModel,
 		systemPrompt: '',
