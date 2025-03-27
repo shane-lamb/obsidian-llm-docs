@@ -1,7 +1,9 @@
 import { App, PluginSettingTab, Setting, TextComponent } from 'obsidian'
-import { DocOpenMethods, openaiModels } from '../settings'
+import { DocOpenMethods } from '../settings'
 import LlmDocsPlugin from '../main'
 import { addConnectionsSettings } from './connections'
+import { modelCacheUpdated, modelSelected } from '../registry'
+import { ModelPickerModal } from './model-picker'
 
 export class SettingsTab extends PluginSettingTab {
 	plugin: LlmDocsPlugin
@@ -9,6 +11,13 @@ export class SettingsTab extends PluginSettingTab {
 	constructor(app: App, plugin: LlmDocsPlugin) {
 		super(app, plugin)
 		this.plugin = plugin
+		modelCacheUpdated.on('change', () => this.display())
+	}
+
+	hide() {
+		super.hide()
+		modelCacheUpdated.removeAllListeners()
+		modelSelected.removeAllListeners()
 	}
 
 	display(): void {
@@ -67,38 +76,27 @@ export class SettingsTab extends PluginSettingTab {
 	}
 
 	addDefaultModelSetting(containerEl: HTMLElement) {
-		const initialValue = this.plugin.settings.defaults.model
-		const initialValueIsOther = !Object.keys(openaiModels).includes(initialValue)
 		let textComponent: TextComponent
+
+		const save = async (value: string) => {
+			this.plugin.settings.defaults.model = value
+			await this.plugin.saveSettings()
+		}
+
 		new Setting(containerEl)
 			.setName('Default model')
 			.setDesc('The default LLM model variant to use for new LLM documents')
-			.addDropdown((dropdown) => {
-				dropdown
-					.addOptions({
-						...openaiModels,
-						other: 'Custom',
+			.addButton((button) => {
+				button.setButtonText('Select').onClick(() => {
+					new ModelPickerModal(this.app, this.plugin.settings.connections).open()
+					modelSelected.on('change', async (model) => {
+						textComponent.setValue(model)
+						await save(model)
 					})
-					.setValue(initialValueIsOther ? 'other' : initialValue)
-					.onChange(async (value) => {
-						if (value === 'other') {
-							textComponent.setDisabled(false)
-							textComponent.inputEl.focus()
-						} else {
-							textComponent.setDisabled(true)
-							textComponent.setValue(value)
-							this.plugin.settings.defaults.model = value
-							await this.plugin.saveSettings()
-						}
-					})
+				})
 			})
 			.addText((text) => {
-				text.setValue(initialValue)
-					.onChange(async (value) => {
-						this.plugin.settings.defaults.model = value
-						await this.plugin.saveSettings()
-					})
-					.setDisabled(!initialValueIsOther)
+				text.setValue(this.plugin.settings.defaults.model).onChange(async (value) => save(value))
 				textComponent = text
 			})
 	}

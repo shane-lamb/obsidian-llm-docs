@@ -18,24 +18,17 @@ export interface DefaultsSettings {
 	docOpenMethod: DocOpenMethods
 }
 
-export const openaiModels = {
-	'gpt-4o': 'GPT-4o',
-	'gpt-4o-mini': 'GPT-4o mini',
-}
-
 export interface LlmConnectionSettings {
 	type: 'OpenAI' // 'Anthropic' and other types in future
 	baseUrl: string
 	apiKey: string
 }
 
-const defaultModel: keyof typeof openaiModels = 'gpt-4o'
-
 export const defaultPluginSettings: PluginSettings = {
 	docsDir: 'LLM',
 	connections: [],
 	defaults: {
-		model: defaultModel,
+		model: 'gpt-4o',
 		systemPrompt: '',
 		docOpenMethod: DocOpenMethods.tab,
 	},

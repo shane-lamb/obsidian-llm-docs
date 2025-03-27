@@ -58,3 +58,11 @@ If your plugin does not need CSS, delete this file.
 	opacity: 50%;
 	animation: rotate90 2s steps(1) infinite;
 }
+
+.llmdocs-suggest-item-title {
+	font-weight: 600;
+}
+
+.llmdocs-suggest-item-subtext {
+	color: var(--text-muted);
+}

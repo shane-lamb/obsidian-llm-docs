@@ -1,6 +1,6 @@
 import { Notice, Setting } from 'obsidian'
-import { getAvailableOpenaiModels } from '../open-ai'
 import LlmDocsPlugin from '../main'
+import { getAvailableModelsAndUpdateCache } from '../connection-models'
 
 export function addConnectionsSettings(containerEl: HTMLElement, plugin: LlmDocsPlugin, redraw: () => void) {
 	new Setting(containerEl)
@@ -49,7 +49,7 @@ export function addConnectionsSettings(containerEl: HTMLElement, plugin: LlmDocs
 			button.setButtonText('Test').onClick(async () => {
 				button.setDisabled(true)
 				try {
-					await getAvailableOpenaiModels(connection)
+					await getAvailableModelsAndUpdateCache(connection)
 					new Notice('Connection success!')
 				} catch (error) {
 					new Notice(error)

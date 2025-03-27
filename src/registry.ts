@@ -25,3 +25,7 @@ export interface ILlmDocsPlugin {
 let llmDocsPlugin: ILlmDocsPlugin
 export const getLlmDocsPlugin = () => llmDocsPlugin
 export const setLlmDocsPlugin = (plugin: ILlmDocsPlugin) => (llmDocsPlugin = plugin)
+
+export const modelCacheUpdated = new EventEmitter()
+
+export const modelSelected = new EventEmitter()

@@ -22,7 +22,7 @@ export interface OpenaiContent {
 	}
 }
 
-export async function getAvailableOpenaiModels(settings: LlmConnectionSettings): Promise<string[] | undefined> {
+export async function getAvailableOpenaiModels(settings: LlmConnectionSettings): Promise<string[]> {
 	const response = await fetch(`${settings.baseUrl}/v1/models`, {
 		headers: {
 			'Content-Type': 'application/json',
@@ -33,7 +33,7 @@ export async function getAvailableOpenaiModels(settings: LlmConnectionSettings):
 	await throwOnBadResponse(response)
 
 	const data: any = await response.json()
-	return data?.data.map((model: any) => model.id)
+	return data.data.map((model: any) => model.id)
 }
 
 export class OpenaiChatCompletionStream extends EventEmitter {
