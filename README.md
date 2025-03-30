@@ -1,4 +1,4 @@
-# Obsidian LLM docs
+# LLM docs
 
 A plugin for Obsidian (https://obsidian.md) that lets you chat with LLMs in plain markdown files!
 
