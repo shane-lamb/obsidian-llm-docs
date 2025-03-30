@@ -66,3 +66,11 @@ If your plugin does not need CSS, delete this file.
 .llmdocs-suggest-item-subtext {
 	color: var(--text-muted);
 }
+
+.llmdocs-suggest-item-title {
+	font-weight: 600;
+}
+
+.llmdocs-suggest-item-subtext {
+	color: var(--text-muted);
+}

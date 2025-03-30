@@ -3,7 +3,7 @@
 	"name": "LLM docs",
 	"version": "1.0.0",
 	"minAppVersion": "1.7.0",
-	"description": "Chat with LLM (ChatGPT) inside Obsidian files",
+	"description": "Simple LLM (AI) client using pure markdown documents",
 	"author": "Shane Lamb",
 	"authorUrl": "https://lambo.land",
 	"fundingUrl": "https://ko-fi.com/shanelamb",
