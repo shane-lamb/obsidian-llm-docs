@@ -1,7 +1,7 @@
-import { Editor, MarkdownView, Plugin, Notice, normalizePath, TFile } from 'obsidian'
+import { Editor, MarkdownView, normalizePath, Notice, Plugin, TFile } from 'obsidian'
 
 import { LlmDoc } from './llm-doc'
-import { defaultPluginSettings, PluginSettings } from './settings'
+import { defaultPluginSettings, DocOpenMethods, PluginSettings } from './settings'
 import { llmDocsCodemirrorPlugin } from './editor-extension'
 import { OpenaiBasicMessage } from './open-ai'
 import {
@@ -38,6 +38,15 @@ export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 			editorCallback: async (editor, view) => {
 				const file: TFile = view.file!
 				await this.completeDoc(editor, file)
+			},
+		})
+
+		this.addCommand({
+			id: 'chat_with_current_document',
+			name: 'Chat with current document',
+			editorCallback: async (editor, view) => {
+				const file: TFile = view.file!
+				await this.chatWithDoc(file)
 			},
 		})
 
@@ -87,7 +96,7 @@ export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 		fileProcessingStopped(file)
 	}
 
-	async createNewDoc() {
+	async createNewDoc(docOpenMethod?: DocOpenMethods, systemPrompt?: string) {
 		// create directory if it doesn't exist
 		const dir = normalizePath(this.settings.docsDir)
 		if (!this.app.vault.getAbstractFileByPath(dir)) {
@@ -110,9 +119,11 @@ export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 			return
 		}
 
-		const { model, systemPrompt, docOpenMethod } = this.settings.defaults
+		const { defaults } = this.settings
+		docOpenMethod = docOpenMethod ?? defaults.docOpenMethod
+		systemPrompt = systemPrompt ?? defaults.systemPrompt
 		// create the doc
-		const doc = await LlmDoc.create(this.app, freePath, { model }, [
+		const doc = await LlmDoc.create(this.app, freePath, { model: defaults.model }, [
 			...(systemPrompt.length ? [{ role: 'system', content: systemPrompt } as OpenaiBasicMessage] : []),
 			{ role: 'user', content: '' },
 		])
@@ -137,5 +148,13 @@ export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings)
+	}
+
+	private async chatWithDoc(file: TFile) {
+		const linkText = this.app.metadataCache.fileToLinktext(file, '')
+		await this.createNewDoc(
+			DocOpenMethods.splitVertical,
+			`The user is referencing a document named "${file.name}" with the following content: [[${linkText}]]`,
+		)
 	}
 }
