@@ -29,6 +29,7 @@
 		"typescript": "4.7.4"
 	},
 	"dependencies": {
+		"ignore": "^7.0.3",
 		"node-fetch": "^3.3.2"
 	}
 }

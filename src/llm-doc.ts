@@ -7,6 +7,7 @@ import { resolveConnectionForModel } from './connection-models'
 
 export interface LlmDocProperties {
 	model: string
+	repo_dir?: string
 }
 
 type CompletionStream = OpenaiChatCompletionStream
@@ -80,15 +81,17 @@ export class LlmDoc {
 
 		await this.write()
 
-		const stream = new completionStream(
-			connectionSettings,
-			this.properties.model,
-			await preprocessMessages(
-				this.messages,
-				getDocLinkResolver(this.app, this.file.path),
-				getImageLinkResolver(this.app, this.file.path),
-			),
+		const messages = await preprocessMessages(
+			this.messages,
+			getDocLinkResolver(this.app, this.file.path),
+			getImageLinkResolver(this.app, this.file.path),
 		)
+
+		if (this.properties.repo_dir) {
+			// todo: enrich prompt with repo context
+		}
+
+		const stream = new completionStream(connectionSettings, this.properties.model, messages)
 
 		this.currentStream = stream
 

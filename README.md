@@ -31,3 +31,7 @@ Type in your prompt and click "Complete" to generate a response! (or bind a keyb
 ## If you like it, I'm grateful for your support!
 
 <a href='https://ko-fi.com/V7V019UAWY' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi6.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+
+
+## User Guide (2.0)
+- Use inbuilt "Duplicate current file" command to fork
