@@ -1,6 +1,5 @@
 import { EventEmitter } from 'node:events'
 import { LlmConnectionSettings } from './settings'
-import fetch, { Response } from 'node-fetch'
 
 export type OpenaiRole = 'user' | 'assistant' | 'system'
 
@@ -91,11 +90,21 @@ export class OpenaiChatCompletionStream extends EventEmitter {
 
 		await throwOnBadResponse(response)
 
-		for await (const chunk of response.body!) {
-			const content = this.parseChunkForContent(chunk.toString())
-			if (content) {
-				this.entireContent += content
-				this.emit('data', content)
+		const body: ReadableStream<Uint8Array> = response.body!
+
+		const reader = body.getReader()
+		const decoder = new TextDecoder('utf-8')
+		let done = false
+		while (!done) {
+			const { done: readerDone, value } = await reader.read()
+			done = readerDone
+			if (value) {
+				const chunk = decoder.decode(value, { stream: true })
+				const content = this.parseChunkForContent(chunk)
+				if (content) {
+					this.entireContent += content
+					this.emit('data', content)
+				}
 			}
 		}
 	}
