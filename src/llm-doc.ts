@@ -1,4 +1,4 @@
-import { App, getFrontMatterInfo, TFile } from 'obsidian'
+import { App, getFrontMatterInfo, parseYaml, TFile } from 'obsidian'
 import { OpenaiChatCompletionStream, OpenaiBasicMessage } from './open-ai'
 import { messagesToText, preprocessMessages, textToMessages } from './llm-doc-util'
 import { DefaultsSettings, LlmConnectionSettings } from './settings'
@@ -23,16 +23,14 @@ export class LlmDoc {
 	) {}
 
 	static async fromFile(app: App, file: TFile, defaults: DefaultsSettings): Promise<LlmDoc> {
-		let properties = {} as LlmDocProperties
-		await app.fileManager.processFrontMatter(file, (frontmatter) => {
-			properties = {
-				model: defaults.model,
-				...frontmatter,
-			}
-		})
 		const text = await app.vault.read(file)
-		const { contentStart } = getFrontMatterInfo(text)
-		const withoutFrontmatter = text.slice(contentStart)
+		const fmInfo = getFrontMatterInfo(text)
+		const frontmatter = fmInfo.exists ? parseYaml(fmInfo.frontmatter) : {}
+		const properties: LlmDocProperties = {
+			model: defaults.model,
+			...frontmatter,
+		}
+		const withoutFrontmatter = text.slice(fmInfo.contentStart)
 		const messages = textToMessages(withoutFrontmatter)
 		return new LlmDoc(app, file, messages, properties)
 	}
