@@ -115,7 +115,7 @@ export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 			}
 		}
 		if (!freePath) {
-			new Notice("You're on fire!")
+			new Notice("Couldn't create - maximum of 100 files per day reached")
 			return
 		}
 
