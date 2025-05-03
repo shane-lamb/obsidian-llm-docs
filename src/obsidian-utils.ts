@@ -1,4 +1,4 @@
-import { App, Workspace } from 'obsidian'
+import { App, Editor, Workspace } from 'obsidian'
 import { DocOpenMethods } from './settings'
 
 const imageExtensions = ['png', 'jpg', 'jpeg', 'gif']
@@ -42,4 +42,10 @@ export function getLeaf(workspace: Workspace, method: DocOpenMethods) {
 		default:
 			return workspace.getLeaf('tab')
 	}
+}
+
+export function appendToEditor(editor: Editor, text: string) {
+	const lastLineNumber = editor.lastLine()
+	const lastLineText = editor.getLine(lastLineNumber)
+	editor.setLine(lastLineNumber, lastLineText + text)
 }

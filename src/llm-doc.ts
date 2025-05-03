@@ -1,8 +1,8 @@
-import { App, getFrontMatterInfo, parseYaml, TFile } from 'obsidian'
+import { App, Editor, getFrontMatterInfo, parseYaml, TFile } from 'obsidian'
 import { OpenaiChatCompletionStream, OpenaiBasicMessage } from './open-ai'
 import { messagesToText, preprocessMessages, textToMessages } from './llm-doc-util'
 import { DefaultsSettings, LlmConnectionSettings } from './settings'
-import { getImageLinkResolver, getDocLinkResolver } from './obsidian-utils'
+import { getImageLinkResolver, getDocLinkResolver, appendToEditor } from './obsidian-utils'
 import { resolveConnectionForModel } from './connection-models'
 
 export interface LlmDocProperties {
@@ -49,34 +49,20 @@ export class LlmDoc {
 		return new LlmDoc(app, file, messages, properties)
 	}
 
-	async write() {
-		await this.app.fileManager.processFrontMatter(this.file, (frontmatter) => {
-			frontmatter.model = this.properties.model
-		})
-		const newMessagesText = messagesToText(this.messages)
-		const existingText = await this.app.vault.read(this.file)
-		const { contentStart } = getFrontMatterInfo(existingText)
-		const newText = existingText.slice(0, contentStart) + newMessagesText
-		await this.app.vault.modify(this.file, newText)
-	}
-
 	async stop() {
 		this.currentStream?.stop()
 	}
 
-	async complete(connections: LlmConnectionSettings[]) {
+	async complete(connections: LlmConnectionSettings[], editor: Editor) {
 		const connectionSettings = await resolveConnectionForModel(connections, this.properties.model)
 		if (!connectionSettings) {
 			throw new Error(`No connection found for model "${this.properties.model}"`)
 		}
 
-		const lastMessage = this.messages[this.messages.length - 1]
-		const userIsLast = lastMessage.role !== 'assistant'
-		if (userIsLast) {
-			lastMessage.content = lastMessage.content.trimEnd()
-		}
-
-		await this.write()
+		// update model in frontmatter if not set and default was used
+		await this.app.fileManager.processFrontMatter(this.file, (frontmatter) => {
+			frontmatter.model = this.properties.model
+		})
 
 		const stream = new completionStream(
 			connectionSettings,
@@ -90,24 +76,19 @@ export class LlmDoc {
 
 		this.currentStream = stream
 
-		let headingAdded = !userIsLast
+		let headingAdded = false
 		stream.on('data', (data: string) => {
-			if (headingAdded) {
-				this.app.vault.append(this.file, data)
-			} else {
+			if (!headingAdded) {
+				appendToEditor(editor, '\n# assistant\n')
 				headingAdded = true
-				this.app.vault.append(this.file, '\n# assistant\n' + data)
 			}
+			appendToEditor(editor, data)
 		})
 
 		await stream.result()
 
-		if (userIsLast) {
-			this.messages.push({ role: 'assistant', content: stream.entireContent })
-		} else {
-			lastMessage.content += stream.entireContent
-		}
-		this.messages.push({ role: 'user', content: '' })
-		await this.write()
+		appendToEditor(editor, '\n# user\n')
+
+		editor.setCursor({ line: editor.lastLine(), ch: 0 })
 	}
 }
