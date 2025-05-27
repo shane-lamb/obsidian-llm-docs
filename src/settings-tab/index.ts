@@ -4,6 +4,7 @@ import LlmDocsPlugin from '../main'
 import { addConnectionsSettings } from './connections'
 import { modelCacheUpdated, modelSelected } from '../registry'
 import { ModelPickerModal } from './model-picker'
+import { FolderSuggest } from './folder-suggest'
 
 export class SettingsTab extends PluginSettingTab {
 	plugin: LlmDocsPlugin
@@ -21,21 +22,24 @@ export class SettingsTab extends PluginSettingTab {
 	}
 
 	display(): void {
-		const { containerEl } = this
+		const {containerEl} = this
 
 		containerEl.empty()
 
 		new Setting(containerEl)
 			.setName('LLM docs directory')
 			.setDesc('The directory where new LLM documents will be created')
-			.addText((text) =>
-				text
-					.setPlaceholder('path/to/directory')
-					.setValue(this.plugin.settings.docsDir)
-					.onChange(async (value) => {
-						this.plugin.settings.docsDir = value
-						await this.plugin.saveSettings()
-					}),
+			.addText((text) => {
+					text
+						.setPlaceholder('path/to/directory')
+						.setValue(this.plugin.settings.docsDir)
+						.onChange(async (value) => {
+							this.plugin.settings.docsDir = value
+							await this.plugin.saveSettings()
+						})
+
+					new FolderSuggest(this.app, text.inputEl)
+				}
 			)
 
 		const documentOpenMethods: Record<DocOpenMethods, string> = {
