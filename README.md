@@ -5,10 +5,23 @@ A plugin for Obsidian (https://obsidian.md) that lets you chat with LLMs in plai
 ## Features
 
 - Use the same Obsidian markdown editor you know and love to chat with LLMs and freely edit conversation history
-- Integrates with the OpenAI API
+- Integrates with the OpenAI API (with plans to support other providers like Google and Anthropic)
 - Also works with self-hosted/local LLMs that expose an OpenAI-compatible API, like Ollama (https://ollama.com)
 - Can follow links to other Obsidian documents included in your prompt, making it easier to include additional context
 - Supports linked/embedded images in prompt
+
+## Advantages over similar plugins
+
+The core feature of this plugin is that all chatting is done in plain markdown files which can be freely edited and persisted in your vault along with all your other documents.
+Most plugins featuring LLM chat aren't built this way, and instead make use of a separate window/UI to facilitate chat.
+Having said that, there is another great Obsidian plugin called [ChatGPT MD](https://github.com/bramses/chatgpt-md) which shares this design principle.
+
+Compared to [ChatGPT MD](https://github.com/bramses/chatgpt-md), an advantage is that this plugin includes visual overlays like a "complete" button to execute your query and a loading indicator to let you know your query is being executed. The headings for user and assistant responses have also been stylized to make it easier to read and scan through the document.
+Also, I've supported inline images and linked documents (markdown files) being included as context in the prompt.
+
+In the future I plan to add even more great features, including:
+- Support for other LLM provider APIs, such as Google and Anthropic
+- Tool use, enabling "agentic" behaviour
 
 ## How to use
 
