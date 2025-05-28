@@ -150,7 +150,8 @@ export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 	}
 
 	private async chatWithDoc(file: TFile) {
-		const linkText = this.app.metadataCache.fileToLinktext(file, '')
+		const newDocDir = normalizePath(this.settings.docsDir)
+		const linkText = this.app.metadataCache.fileToLinktext(file, newDocDir)
 		await this.createNewDoc(
 			DocOpenMethods.splitVertical,
 			`The user is referencing a document named "${file.name}" with the following content: [[${linkText}]]`,
