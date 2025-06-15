@@ -36,8 +36,9 @@ export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 			id: 'complete',
 			name: 'Complete LLM document',
 			editorCallback: async (editor, view) => {
-				const file: TFile = view.file!
-				await this.completeDoc(editor, file)
+				if (view.file) {
+					await this.completeDoc(editor, view.file)
+				}
 			},
 		})
 
@@ -45,8 +46,9 @@ export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 			id: 'chat_with_current_document',
 			name: 'Chat with current document',
 			editorCallback: async (editor, view) => {
-				const file: TFile = view.file!
-				await this.chatWithDoc(file)
+				if (view.file) {
+					await this.chatWithDoc(view.file)
+				}
 			},
 		})
 
