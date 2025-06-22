@@ -79,15 +79,20 @@ export class LlmDoc {
 		let headingAdded = false
 		stream.on('data', (data: string) => {
 			if (!headingAdded) {
-				appendToEditor(editor, '\n# assistant\n')
+				this.app.vault.append(this.file, '\n# assistant\n')
 				headingAdded = true
 			}
-			appendToEditor(editor, data)
+			// tried appending to the file using the editor, but that causes janky scrolling during completion, so I've reverted to using vault.append
+			this.app.vault.append(this.file, data)
+			// appendToEditor(editor, data)
 		})
 
 		await stream.result()
 
-		appendToEditor(editor, '\n# user\n')
+		await this.app.vault.append(this.file, '\n# user\n')
+
+		// hack to ensure editor has the latest file changes before setting cursor position
+		await sleep(10)
 
 		editor.setCursor({ line: editor.lastLine(), ch: 0 })
 	}
