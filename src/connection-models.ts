@@ -9,12 +9,22 @@ export interface ConnectionModel {
 	model: string
 }
 
+const modelExclusionList = [
+	/^dall-e/,
+	/embedding/,
+	/(^|-)tts(-|$)/,
+	/^whisper-/,
+]
+
 export function getCachedConnectionModels(connections: LlmConnectionSettings[]): ConnectionModel[] {
 	const models: ConnectionModel[] = []
 	for (const connection of connections) {
 		const connectionId = getConnectionId(connection)
 		for (const [model, id] of modelToConnectionCache) {
 			if (id === connectionId) {
+				if (modelExclusionList.some((regex) => regex.test(model))) {
+					continue
+				}
 				models.push({ connection, model })
 			}
 		}
