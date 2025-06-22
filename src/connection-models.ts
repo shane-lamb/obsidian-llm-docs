@@ -34,6 +34,11 @@ export async function getAvailableModelsAndUpdateCache(connection: LlmConnection
 	modelCacheUpdated.emit('change')
 }
 
+export async function getAllAvailableModelsAndUpdateCache(connections: LlmConnectionSettings[]) {
+	const promises = connections.map((connection) => getAvailableModelsAndUpdateCache(connection).catch(() => {}))
+	await Promise.all(promises)
+}
+
 function resolveCachedConnectionForModel(
 	connections: LlmConnectionSettings[],
 	model: string,
@@ -57,8 +62,7 @@ export async function resolveConnectionForModel(
 		return cached
 	}
 
-	const promises = connections.map((connection) => getAvailableModelsAndUpdateCache(connection).catch(() => {}))
-	await Promise.all(promises)
+	await getAllAvailableModelsAndUpdateCache(connections)
 
 	return resolveCachedConnectionForModel(connections, model)
 }
