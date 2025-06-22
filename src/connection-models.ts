@@ -27,11 +27,19 @@ export function getConnectionId(connection: LlmConnectionSettings) {
 }
 
 export async function getAvailableModelsAndUpdateCache(connection: LlmConnectionSettings) {
+	const connectionId = getConnectionId(connection)
 	let models = await getAvailableOpenaiModels(connection)
+	let somethingChanged = false
 	for (const model of models) {
-		modelToConnectionCache.set(model, getConnectionId(connection))
+		const existing = modelToConnectionCache.get(model)
+		if (!existing || existing !== connectionId) {
+			modelToConnectionCache.set(model, connectionId)
+			somethingChanged = true
+		}
 	}
-	modelCacheUpdated.emit('change')
+	if (somethingChanged) {
+		modelCacheUpdated.emit('change')
+	}
 }
 
 export async function getAllAvailableModelsAndUpdateCache(connections: LlmConnectionSettings[]) {
