@@ -121,7 +121,7 @@ function getCachedModels(settings: PluginSettings): Model[] {
 	const connectionIndices = new Map<string, number>()
 	settings.connections.forEach((connection, index) => {
 		const connectionId = getConnectionId(connection)
-		connectionUrls.set(connectionId, connection.baseUrl)
+		connectionUrls.set(connectionId, removeProtocol(connection.baseUrl))
 		connectionIndices.set(connectionId, index)
 	})
 
@@ -146,4 +146,8 @@ function getCachedModels(settings: PluginSettings): Model[] {
 		})
 	}
 	return models
+}
+
+function removeProtocol(url: string): string {
+	return url.replace(/https?:\/\//, '')
 }
