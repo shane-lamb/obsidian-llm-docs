@@ -13,6 +13,7 @@ import {
 } from './registry'
 import { getLeaf } from './obsidian-utils'
 import { SettingsTab } from './settings-tab'
+import { ModelPickerModal } from './settings-tab/model-picker'
 
 export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 	settings: PluginSettings
@@ -48,6 +49,22 @@ export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 			editorCallback: async (editor, view) => {
 				if (view.file) {
 					await this.chatWithDoc(view.file)
+				}
+			},
+		})
+
+		this.addCommand({
+			id: 'change_model',
+			name: 'Change model used in current document',
+			editorCallback: async (editor, view) => {
+				if (!view.file) return
+
+				const model = await new ModelPickerModal(this.app, this.settings.connections).openAndGetResult()
+				if (model) {
+					await this.app.fileManager.processFrontMatter(view.file, (frontmatter) => {
+						frontmatter.model = model
+					})
+					new Notice('Changed to ' + model)
 				}
 			},
 		})
