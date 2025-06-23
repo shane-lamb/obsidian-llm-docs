@@ -6,10 +6,17 @@ import {
 	getCachedConnectionModels,
 	getConnectionId,
 } from '../connection-models'
-import { modelCacheUpdated, modelSelected } from '../registry'
+import { modelCacheUpdated } from '../registry'
+import { ValueEmitter } from '../utils'
 
 export class ModelPickerModal extends SuggestModal<ConnectionModel> {
 	private models: ConnectionModel[]
+	private onResult = new ValueEmitter<string | null>()
+	private unsubscribe = modelCacheUpdated.on(() => {
+		this.refreshModels()
+		// a bit dangerous as we are invoking internals, but there's no other way to refresh the list once opened
+		;(this as any).updateSuggestions()
+	})
 
 	constructor(
 		app: App,
@@ -20,12 +27,23 @@ export class ModelPickerModal extends SuggestModal<ConnectionModel> {
 		this.emptyStateText = this.getEmptyStateText()
 	}
 
-	refreshModels() {
-		const collator = new Intl.Collator()
-		this.models = getCachedConnectionModels(this.connections).sort((a, b) => collator.compare(sortKey(a), sortKey(b)))
+	async openAndGetResult(): Promise<string | null> {
+		return new Promise((resolve) => {
+			this.open()
+			this.onResult.once((result) => {
+				resolve(result)
+			})
+		})
 	}
 
-	getEmptyStateText(): string {
+	private refreshModels() {
+		const collator = new Intl.Collator()
+		this.models = getCachedConnectionModels(this.connections).sort((a, b) =>
+			collator.compare(sortKey(a), sortKey(b)),
+		)
+	}
+
+	private getEmptyStateText(): string {
 		if (!this.connections.length) {
 			return `No results. You need to add a connection first!`
 		}
@@ -45,16 +63,11 @@ export class ModelPickerModal extends SuggestModal<ConnectionModel> {
 	}
 
 	onChooseSuggestion(model: ConnectionModel, evt: MouseEvent | KeyboardEvent) {
-		modelSelected.emit('change', model.model)
+		this.onResult.emit(model.model)
 	}
 
 	onOpen() {
 		super.onOpen()
-
-		modelCacheUpdated.on('change', () => {
-			this.refreshModels();
-			(this as any).updateSuggestions()
-		})
 
 		getAllAvailableModelsAndUpdateCache(this.connections).then()
 	}
@@ -62,7 +75,13 @@ export class ModelPickerModal extends SuggestModal<ConnectionModel> {
 	onClose() {
 		super.onClose()
 
-		modelCacheUpdated.removeAllListeners()
+		this.unsubscribe()
+
+		// for some bizarre reason, onClose() is called before onChooseSuggestion()!
+		// which unfortunately makes this hack necessary
+		sleep(0).then(() => {
+			this.onResult.emit(null)
+		})
 	}
 }
 

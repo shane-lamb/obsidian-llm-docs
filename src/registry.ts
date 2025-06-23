@@ -1,5 +1,6 @@
 import { Editor, TFile } from 'obsidian'
 import { EventEmitter } from 'node:events'
+import { ValueEmitter } from './utils'
 
 const filesBeingProcessed: Set<TFile> = new Set()
 export const fileEvents = new EventEmitter()
@@ -26,6 +27,4 @@ let llmDocsPlugin: ILlmDocsPlugin
 export const getLlmDocsPlugin = () => llmDocsPlugin
 export const setLlmDocsPlugin = (plugin: ILlmDocsPlugin) => (llmDocsPlugin = plugin)
 
-export const modelCacheUpdated = new EventEmitter()
-
-export const modelSelected = new EventEmitter()
+export const modelCacheUpdated = new ValueEmitter<void>()

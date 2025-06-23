@@ -28,3 +28,31 @@ export function splitKeepingSeparators(input: string, separator: RegExp): SplitP
 	}
 	return parts
 }
+
+export class ValueEmitter<T> {
+	listeners = new Set<(arg: T) => void>()
+
+	on(listener: (arg: T) => void) {
+		this.listeners.add(listener)
+		// Return an unsubscribe function
+		return () => this.off(listener)
+	}
+
+	off(listener: (arg: T) => void) {
+		this.listeners.delete(listener)
+	}
+
+	once(listener: (arg: T) => void) {
+		const wrappedListener = (arg: T) => {
+			this.off(wrappedListener)
+			listener(arg)
+		}
+		return this.on(wrappedListener)
+	}
+
+	emit(data: T) {
+		for (const listener of this.listeners) {
+			listener(data)
+		}
+	}
+}

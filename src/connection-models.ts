@@ -48,7 +48,7 @@ export async function getAvailableModelsAndUpdateCache(connection: LlmConnection
 		}
 	}
 	if (somethingChanged) {
-		modelCacheUpdated.emit('change')
+		modelCacheUpdated.emit()
 	}
 }
 

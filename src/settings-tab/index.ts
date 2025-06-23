@@ -1,28 +1,29 @@
-import { App, PluginSettingTab, Setting, TextComponent } from 'obsidian'
+import { App, PluginSettingTab, Setting } from 'obsidian'
 import { DocOpenMethods } from '../settings'
 import LlmDocsPlugin from '../main'
 import { addConnectionsSettings } from './connections'
-import { modelCacheUpdated, modelSelected } from '../registry'
+import { modelCacheUpdated } from '../registry'
 import { ModelPickerModal } from './model-picker'
 import { FolderSuggest } from './folder-suggest'
 
 export class SettingsTab extends PluginSettingTab {
 	plugin: LlmDocsPlugin
 
+	unsubscribe = modelCacheUpdated.on(() => this.display())
+
 	constructor(app: App, plugin: LlmDocsPlugin) {
 		super(app, plugin)
 		this.plugin = plugin
-		modelCacheUpdated.on('change', () => this.display())
 	}
 
 	hide() {
 		super.hide()
-		modelCacheUpdated.removeAllListeners()
-		modelSelected.removeAllListeners()
+
+		this.unsubscribe()
 	}
 
 	display(): void {
-		const {containerEl} = this
+		const { containerEl } = this
 
 		containerEl.empty()
 
@@ -30,17 +31,15 @@ export class SettingsTab extends PluginSettingTab {
 			.setName('LLM docs directory')
 			.setDesc('The directory where new LLM documents will be created')
 			.addText((text) => {
-					text
-						.setPlaceholder('path/to/directory')
-						.setValue(this.plugin.settings.docsDir)
-						.onChange(async (value) => {
-							this.plugin.settings.docsDir = value
-							await this.plugin.saveSettings()
-						})
+				text.setPlaceholder('path/to/directory')
+					.setValue(this.plugin.settings.docsDir)
+					.onChange(async (value) => {
+						this.plugin.settings.docsDir = value
+						await this.plugin.saveSettings()
+					})
 
-					new FolderSuggest(this.app, text.inputEl)
-				}
-			)
+				new FolderSuggest(this.app, text.inputEl)
+			})
 
 		const documentOpenMethods: Record<DocOpenMethods, string> = {
 			tab: 'a new tab',
@@ -80,8 +79,6 @@ export class SettingsTab extends PluginSettingTab {
 	}
 
 	addDefaultModelSetting(containerEl: HTMLElement) {
-		let textComponent: TextComponent
-
 		const save = async (value: string) => {
 			this.plugin.settings.defaults.model = value
 			await this.plugin.saveSettings()
@@ -91,17 +88,22 @@ export class SettingsTab extends PluginSettingTab {
 			.setName('Default model')
 			.setDesc('The default LLM model variant to use for new LLM documents')
 			.addButton((button) => {
-				button.setButtonText('Select').onClick(() => {
-					new ModelPickerModal(this.app, this.plugin.settings.connections).open()
-					modelSelected.on('change', async (model) => {
-						textComponent.setValue(model)
+				button.setButtonText('Select').onClick(async () => {
+					const model = await new ModelPickerModal(
+						this.app,
+						this.plugin.settings.connections,
+					).openAndGetResult()
+					if (model) {
 						await save(model)
-					})
+						// force refresh of textbox in a way that is resilient to
+						// the page being refreshed while the modal is still open
+						// (can happen due to the subscription to "modelCacheUpdated")
+						this.display()
+					}
 				})
 			})
 			.addText((text) => {
 				text.setValue(this.plugin.settings.defaults.model).onChange(async (value) => save(value))
-				textComponent = text
 			})
 	}
 }
