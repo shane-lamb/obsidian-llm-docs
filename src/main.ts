@@ -62,9 +62,12 @@ export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 				const model = await new ModelPickerModal(this.app, this).openAndGetResult()
 				if (model) {
 					await this.app.fileManager.processFrontMatter(view.file, (frontmatter) => {
-						frontmatter.model = model
+						const existingModel = frontmatter.model
+						if (model !== existingModel) {
+							frontmatter.model = model
+							new Notice('Changed to ' + model)
+						}
 					})
-					new Notice('Changed to ' + model)
 				}
 			},
 		})
