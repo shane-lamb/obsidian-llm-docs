@@ -25,6 +25,7 @@ export class ModelPickerModal extends SuggestModal<ConnectionModel> {
 		super(app)
 		this.refreshModels()
 		this.emptyStateText = this.getEmptyStateText()
+		this.setPlaceholder('Select a model...')
 	}
 
 	async openAndGetResult(): Promise<string | null> {
