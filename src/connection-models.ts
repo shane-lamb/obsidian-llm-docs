@@ -2,35 +2,7 @@ import { LlmConnectionSettings } from './settings'
 import { getAvailableOpenaiModels } from './open-ai'
 import { modelCacheUpdated } from './registry'
 
-const modelToConnectionCache = new Map<string, string>()
-
-export interface ConnectionModel {
-	connection: LlmConnectionSettings
-	model: string
-}
-
-const modelExclusionList = [
-	/^dall-e/,
-	/embedding/,
-	/(^|-)tts(-|$)/,
-	/^whisper-/,
-]
-
-export function getCachedConnectionModels(connections: LlmConnectionSettings[]): ConnectionModel[] {
-	const models: ConnectionModel[] = []
-	for (const connection of connections) {
-		const connectionId = getConnectionId(connection)
-		for (const [model, id] of modelToConnectionCache) {
-			if (id === connectionId) {
-				if (modelExclusionList.some((regex) => regex.test(model))) {
-					continue
-				}
-				models.push({ connection, model })
-			}
-		}
-	}
-	return models
-}
+export const modelToConnectionCache = new Map<string, string>()
 
 export function getConnectionId(connection: LlmConnectionSettings) {
 	return connection.type + connection.baseUrl

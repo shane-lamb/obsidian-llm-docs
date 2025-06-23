@@ -59,7 +59,7 @@ export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 			editorCallback: async (editor, view) => {
 				if (!view.file) return
 
-				const model = await new ModelPickerModal(this.app, this.settings.connections).openAndGetResult()
+				const model = await new ModelPickerModal(this.app, this).openAndGetResult()
 				if (model) {
 					await this.app.fileManager.processFrontMatter(view.file, (frontmatter) => {
 						frontmatter.model = model

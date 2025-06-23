@@ -74,3 +74,36 @@ If your plugin does not need CSS, delete this file.
 .llmdocs-suggest-item-subtext {
 	color: var(--text-muted);
 }
+
+.llmdocs-suggest-item-pin {
+	float: right;
+	border-radius: 2.5em;
+	width: 2.5em;
+	height: 2.5em;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	visibility: hidden;
+	color: var(--icon-color);
+	opacity: var(--icon-opacity);
+	cursor: pointer;
+}
+
+.is-selected .llmdocs-suggest-item-pin {
+	visibility: visible;
+}
+
+.llmdocs-suggest-item-pin:hover {
+	opacity: var(--icon-opacity-hover);
+	color: var(--icon-color-hover);
+	background-color: var(--background-modifier-hover);
+}
+
+.llmdocs-suggest-item-pin.pinned {
+	visibility: visible;
+	color: var(--text-accent);
+}
+
+.llmdocs-suggest-item-pin.pinned:hover {
+	background-color: var(--background-primary);
+}

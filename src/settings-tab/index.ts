@@ -7,13 +7,13 @@ import { ModelPickerModal } from './model-picker'
 import { FolderSuggest } from './folder-suggest'
 
 export class SettingsTab extends PluginSettingTab {
-	plugin: LlmDocsPlugin
-
 	unsubscribe = modelCacheUpdated.on(() => this.display())
 
-	constructor(app: App, plugin: LlmDocsPlugin) {
+	constructor(
+		app: App,
+		private plugin: LlmDocsPlugin,
+	) {
 		super(app, plugin)
-		this.plugin = plugin
 	}
 
 	hide() {
@@ -89,10 +89,7 @@ export class SettingsTab extends PluginSettingTab {
 			.setDesc('The default LLM model variant to use for new LLM documents')
 			.addButton((button) => {
 				button.setButtonText('Select').onClick(async () => {
-					const model = await new ModelPickerModal(
-						this.app,
-						this.plugin.settings.connections,
-					).openAndGetResult()
+					const model = await new ModelPickerModal(this.app, this.plugin).openAndGetResult()
 					if (model) {
 						await save(model)
 						// force refresh of textbox in a way that is resilient to
