@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-llm-docs",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"description": "Chat with LLM (ChatGPT) inside Obsidian files",
 	"main": "main.js",
 	"scripts": {
