@@ -68,7 +68,7 @@ class LlmDocsCodemirrorPlugin implements PluginValue {
 		const endLine = doc.lineAt(viewport.to)
 		let offset = startLine.from
 		let promptStart: number | null = null
-		for (const line of doc.iterLines(startLine.number, endLine.number)) {
+		for (const line of doc.iterLines(startLine.number, endLine.number + 1)) {
 			if (line.startsWith('# ')) {
 				if (line === '# system') {
 					promptStart = null
