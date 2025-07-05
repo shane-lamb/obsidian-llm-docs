@@ -17,13 +17,28 @@ type PosRange = { from: number; to: number }
 
 class LlmDocsCodemirrorPlugin implements PluginValue {
 	decorations: DecorationSet
+	cursorCanBeObscured: boolean
 
 	constructor(private readonly view: EditorView) {
 		this.rebuild()
 	}
 
 	update(update: ViewUpdate) {
-		if (update.docChanged || update.viewportChanged) {
+		// calculate whether the cursor would be hidden by displaying the footer
+		let cursorCanBeObscured = this.cursorCanBeObscured
+		if (update.selectionSet) {
+			const outOfInsertMode = (this.view as any).cm?.state?.vim?.insertMode === false
+			if (outOfInsertMode) {
+				const { doc, selection } = this.view.state
+				const distToEnd = doc.length - selection.main.to
+				cursorCanBeObscured = distToEnd === 0
+			} else {
+				cursorCanBeObscured = false
+			}
+		}
+
+		if (update.docChanged || update.viewportChanged || cursorCanBeObscured !== this.cursorCanBeObscured) {
+			this.cursorCanBeObscured = cursorCanBeObscured
 			this.rebuild()
 		}
 	}
@@ -115,15 +130,19 @@ class LlmDocsCodemirrorPlugin implements PluginValue {
 
 		// if a file isn't being processed then we should add footer if the button should be displayed...
 
-		// if there isn't a non-system prompt in view, don't show button
+		// if there's no prompt start in view, let's just act as if there's one somewhere above (outside the current viewable window)
 		if (!promptStart) {
-			return false
+			return true
 		}
 
 		// if the prompt text has nothing but whitespace, don't show
-		// if the prompt text ends with a newline, don't show (so vim normal mode cursor isn't replaced)
 		const promptText = doc.sliceString(promptStart)
-		if (!promptText.trim() || promptText[promptText.length - 1] === '\n') {
+		if (!promptText.trim()) {
+			return false
+		}
+
+		// don't show the footer if doing so will hide the cursor
+		if (this.cursorCanBeObscured) {
 			return false
 		}
 
