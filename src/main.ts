@@ -157,6 +157,11 @@ export default class LlmDocsPlugin extends Plugin implements ILlmDocsPlugin {
 		if (editor) {
 			editor.focus()
 			editor.setCursor({ line: editor.lastLine(), ch: 0 })
+
+			// enter insert mode (applicable if VIM mode enabled)
+			const codemirror = (editor as any).cm as { contentDOM: HTMLElement }
+			const event = new KeyboardEvent('keydown', { key: 'i' })
+			codemirror.contentDOM.dispatchEvent(event)
 		}
 	}
 
